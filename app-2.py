@@ -95,11 +95,11 @@ if not st.session_state.logged_in:
 else:
     # Load the dataset and model with error handling
     try:
-        data = pd.read_csv("R:\\MRP\\final_merged_synthea_cleaned98.csv")
+        data = pd.read_csv("final_merged_synthea_cleaned98.csv")
         model = joblib.load("xgb_model_new.pkl")
     except Exception as e:
         st.error(f"Error loading dataset or model: {e}")
-        data = pd.DataFrame()  # Initialize with empty DataFrame in case of error
+        data = pd.DataFrame()  # Initialize with an empty DataFrame in case of error
     
     # Initialize filtered_data in session state if it doesn't exist
     if "filtered_data" not in st.session_state or st.session_state.filtered_data is None:
