@@ -6,4 +6,4 @@ scikit-learn
 xlsxwriter
 fpdf
 plotly
-
+xgboost
