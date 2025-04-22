@@ -1,0 +1,11 @@
+treamlit
+pandas
+numpy
+joblib
+datetime
+io
+scikit-learn (sklearn)
+xlsxwriter 
+fpdf 
+base64
+plotly.express
