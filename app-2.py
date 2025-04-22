@@ -587,4 +587,4 @@ else:
                 except Exception as e:
                     st.error(f"Error exporting data: {e}")
 
-            st.markdown("</div>", unsafe_allow_html=True)C
+            st.markdown("</div>", unsafe_allow_html=True)
