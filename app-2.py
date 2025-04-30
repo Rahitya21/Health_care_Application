@@ -283,7 +283,7 @@ if not data.empty and "START_YEAR" in data.columns:
     # Save to session state
     st.session_state.filtered_data = filtered_data
 else:
-    st.sidebar.warning("Data not loaded or missing required columns."))
+    st.sidebar.warning("Data not loaded or missing required columns.")
 
     # Tab 2: Key Metrics
     with tab2:
