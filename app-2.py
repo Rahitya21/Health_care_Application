@@ -519,67 +519,80 @@ with tab5:
     st.markdown("</div>", unsafe_allow_html=True)
 
         # Tab 7: Prediction Cost
+# Tab 7: Prediction Cost
 with tab7:
-        st.header("Prediction Cost")
-        st.markdown("<div class='section'>", unsafe_allow_html=True)
+    st.header("Prediction Cost")
+    st.markdown("<div class='section'>", unsafe_allow_html=True)
 
-        st.subheader("Enter Patient Information")
-        
-        # Check if categories exists and has required keys
-        if all(key in categories for key in ["GENDER", "RACE", "ETHNICITY", "ENCOUNTERCLASS", "CODE"]):
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                age = st.slider("Age", 0, 100, 30, key="pred_age")
-                gender = st.selectbox("Gender", categories["GENDER"], key="pred_gender")
-                race = st.selectbox("Race", categories["RACE"], key="pred_race")
-                ethnicity = st.selectbox("Ethnicity", categories["ETHNICITY"], key="pred_ethnicity")
-            
-            with col2:
-                income = st.slider("Income ($)", 0, 100000, 50000, key="pred_income")
-                encounter_class = st.selectbox("Encounter Class", categories["ENCOUNTERCLASS"], key="pred_encounter_class")
-                code = st.selectbox("Procedure Code", categories["CODE"], key="pred_code")
-                encounter_duration = st.slider("Encounter Duration (days)", 0, 30, 1, key="pred_encounter_duration")
+    st.subheader("Enter Patient Information")
 
-            # Create input data with all model-expected columns
-            input_data = pd.DataFrame({
-                "AGE": [age],
-                "GENDER": [str(gender)],
-                "RACE": [str(race)],
-                "ETHNICITY": [str(ethnicity)],
-                "INCOME": [income],
-                "ENCOUNTERCLASS": [str(encounter_class)],
-                "CODE": [str(code)],
-                "ENCOUNTER_DURATION": [encounter_duration],
-                "PAYER_COVERAGE": [0],
-                "BASE_ENCOUNTER_COST": [0],
-                "AVG_CLAIM_COST": [0],
-                "STATE": ["Unknown"],
-                "NUM_DIAG1": [0],
-                "HEALTHCARE_EXPENSES": [0],
-                "NUM_ENCOUNTERS": [0],
-                "NUM_DIAG2": [0]
-            })
+    # Define categories dictionary safely from the data
+    if 'data' in locals() and isinstance(data, pd.DataFrame):
+        categories = {}
+        try:
+            for col in ["GENDER", "RACE", "ETHNICITY", "ENCOUNTERCLASS", "CODE"]:
+                if col in data.columns:
+                    categories[col] = sorted(data[col].dropna().unique())
+        except Exception as e:
+            st.error(f"Error preparing category options: {e}")
+    else:
+        categories = {}
 
-            try:
-                # Perform one-hot encoding
-                categorical_cols = ["GENDER", "RACE", "ETHNICITY", "ENCOUNTERCLASS", "CODE", "STATE"]
-                input_data_encoded = pd.get_dummies(input_data, columns=categorical_cols)
-                
-                # Reindex to match model_features
-                input_data_encoded = input_data_encoded.reindex(columns=model_features, fill_value=0)
+    # Check if all required categories exist
+    if all(key in categories for key in ["GENDER", "RACE", "ETHNICITY", "ENCOUNTERCLASS", "CODE"]):
+        col1, col2 = st.columns(2)
 
-                if st.button("Predict Cost"):
-                    # Ensure input_data_encoded is a numpy array for prediction
-                    prediction_input = input_data_encoded.values
-                    prediction = model.predict(prediction_input)[0]
-                    st.write(f"### Predicted Claim Cost: ${prediction:.2f}")
-            except Exception as e:
-                st.error(f"Error making prediction: {e}")
-        else:
-            st.error("Missing required category data for prediction.")
+        with col1:
+            age = st.slider("Age", 0, 100, 30, key="pred_age")
+            gender = st.selectbox("Gender", categories["GENDER"], key="pred_gender")
+            race = st.selectbox("Race", categories["RACE"], key="pred_race")
+            ethnicity = st.selectbox("Ethnicity", categories["ETHNICITY"], key="pred_ethnicity")
 
-        st.markdown("</div>", unsafe_allow_html=True)
+        with col2:
+            income = st.slider("Income ($)", 0, 100000, 50000, key="pred_income")
+            encounter_class = st.selectbox("Encounter Class", categories["ENCOUNTERCLASS"], key="pred_encounter_class")
+            code = st.selectbox("Procedure Code", categories["CODE"], key="pred_code")
+            encounter_duration = st.slider("Encounter Duration (days)", 0, 30, 1, key="pred_encounter_duration")
+
+        # Create input data with all model-expected columns
+        input_data = pd.DataFrame({
+            "AGE": [age],
+            "GENDER": [str(gender)],
+            "RACE": [str(race)],
+            "ETHNICITY": [str(ethnicity)],
+            "INCOME": [income],
+            "ENCOUNTERCLASS": [str(encounter_class)],
+            "CODE": [str(code)],
+            "ENCOUNTER_DURATION": [encounter_duration],
+            "PAYER_COVERAGE": [0],
+            "BASE_ENCOUNTER_COST": [0],
+            "AVG_CLAIM_COST": [0],
+            "STATE": ["Unknown"],
+            "NUM_DIAG1": [0],
+            "HEALTHCARE_EXPENSES": [0],
+            "NUM_ENCOUNTERS": [0],
+            "NUM_DIAG2": [0]
+        })
+
+        try:
+            # Perform one-hot encoding
+            categorical_cols = ["GENDER", "RACE", "ETHNICITY", "ENCOUNTERCLASS", "CODE", "STATE"]
+            input_data_encoded = pd.get_dummies(input_data, columns=categorical_cols)
+
+            # Reindex to match model_features
+            input_data_encoded = input_data_encoded.reindex(columns=model_features, fill_value=0)
+
+            if st.button("Predict Cost"):
+                prediction_input = input_data_encoded.values
+                prediction = model.predict(prediction_input)[0]
+                st.write(f"### Predicted Claim Cost: ${prediction:.2f}")
+        except Exception as e:
+            st.error(f"Error making prediction: {e}")
+    else:
+        st.error("Missing required category data for prediction.")
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
 
         # Tab 8: Data Export
 with tab8:
