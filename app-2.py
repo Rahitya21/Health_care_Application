@@ -7,6 +7,8 @@ import io
 from sklearn.linear_model import LinearRegression
 from prophet import Prophet
 import matplotlib.pyplot as plt
+import plotly.express as px
+
 try:
     import xlsxwriter
     XLSXWRITER_AVAILABLE = True
