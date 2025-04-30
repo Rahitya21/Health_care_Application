@@ -288,54 +288,54 @@ tab2, tab3, tab4, tab5, tab7, tab8 = st.tabs([
 
 
     # Tab 2: Key Metrics
-    with tab2:
-        st.header("Key Metrics")
-        st.markdown("<div class='section key-metrics-section'>", unsafe_allow_html=True)
-
-        try:
-            if st.session_state.filtered_data is not None and not st.session_state.filtered_data.empty:
-                filtered_data = st.session_state.filtered_data
-                
-                # Check if required columns exist
-                required_metrics_cols = ["TOTALCOST", "AGE", "PATIENT", "ENCOUNTER_DURATION", "HEALTHCARE_COVERAGE"]
-                missing_cols = [col for col in required_metrics_cols if col not in filtered_data.columns]
-                
-                if missing_cols:
-                    st.warning(f"Missing columns for metrics calculation: {missing_cols}")
-                else:
-                    avg_claim_cost = filtered_data["TOTALCOST"].mean()
-                    total_claims = len(filtered_data)
-                    avg_age = filtered_data["AGE"].mean()
-                    total_patients = filtered_data["PATIENT"].nunique()
-                    avg_encounter_duration = filtered_data["ENCOUNTER_DURATION"].mean()
-                    avg_coverage = filtered_data["HEALTHCARE_COVERAGE"].mean() if "HEALTHCARE_COVERAGE" in filtered_data.columns else 0
-
-                    col1, col2, col3 = st.columns(3)
+        with tab2:
+            st.header("Key Metrics")
+            st.markdown("<div class='section key-metrics-section'>", unsafe_allow_html=True)
+    
+            try:
+                if st.session_state.filtered_data is not None and not st.session_state.filtered_data.empty:
+                    filtered_data = st.session_state.filtered_data
                     
-                    with col1:
-                        st.metric(label="Average Claim Cost", value=f"${avg_claim_cost:.2f}")
-                        st.metric(label="Total Number of Patients", value=total_patients)
-
-                    with col2:
-                        st.metric(label="Average Health Care Coverage", value=f"${avg_coverage:.2f}")
-                        st.metric(label="Average Patient Age", value=f"{avg_age:.1f} years")
-
-                    with col3:
-                        st.metric(label="Total Number of Claims", value=total_claims)
-                        st.metric(label="Average Encounter Duration", value=f"{avg_encounter_duration:.1f} days")
-            else:
-                st.warning("No data available for metrics calculation.")
-        except Exception as e:
-            st.error(f"Error calculating key metrics: {e}")
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
-        # Only show the rest of the tabs if we have valid data
-    if data.empty:
-        with tab3, tab4, tab5, tab7, tab8:
-            st.warning("Data could not be loaded. Please check your data source and try again.")
-    else:
-        # 📅 Tab 3: Claim Forecast with Prophet (Interactive + Filters)
+                    # Check if required columns exist
+                    required_metrics_cols = ["TOTALCOST", "AGE", "PATIENT", "ENCOUNTER_DURATION", "HEALTHCARE_COVERAGE"]
+                    missing_cols = [col for col in required_metrics_cols if col not in filtered_data.columns]
+                    
+                    if missing_cols:
+                        st.warning(f"Missing columns for metrics calculation: {missing_cols}")
+                    else:
+                        avg_claim_cost = filtered_data["TOTALCOST"].mean()
+                        total_claims = len(filtered_data)
+                        avg_age = filtered_data["AGE"].mean()
+                        total_patients = filtered_data["PATIENT"].nunique()
+                        avg_encounter_duration = filtered_data["ENCOUNTER_DURATION"].mean()
+                        avg_coverage = filtered_data["HEALTHCARE_COVERAGE"].mean() if "HEALTHCARE_COVERAGE" in filtered_data.columns else 0
+    
+                        col1, col2, col3 = st.columns(3)
+                        
+                        with col1:
+                            st.metric(label="Average Claim Cost", value=f"${avg_claim_cost:.2f}")
+                            st.metric(label="Total Number of Patients", value=total_patients)
+    
+                        with col2:
+                            st.metric(label="Average Health Care Coverage", value=f"${avg_coverage:.2f}")
+                            st.metric(label="Average Patient Age", value=f"{avg_age:.1f} years")
+    
+                        with col3:
+                            st.metric(label="Total Number of Claims", value=total_claims)
+                            st.metric(label="Average Encounter Duration", value=f"{avg_encounter_duration:.1f} days")
+                else:
+                    st.warning("No data available for metrics calculation.")
+            except Exception as e:
+                st.error(f"Error calculating key metrics: {e}")
+    
+            st.markdown("</div>", unsafe_allow_html=True)
+    
+            # Only show the rest of the tabs if we have valid data
+        if data.empty:
+            with tab3, tab4, tab5, tab7, tab8:
+                st.warning("Data could not be loaded. Please check your data source and try again.")
+        else:
+            # 📅 Tab 3: Claim Forecast with Prophet (Interactive + Filters)
         with tab3:
             st.header("Claim Forecast")
             st.markdown("<div class='section'>", unsafe_allow_html=True)
