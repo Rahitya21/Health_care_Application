@@ -402,11 +402,11 @@ else:
     
         st.markdown("</div>", unsafe_allow_html=True)
      # Tab 4: Data Visualizations
-    if data.empty:
-    with tab4:
-        st.warning("Data could not be loaded. Please check your data source and try again.")
+if data.empty:
+with tab4:
+    st.warning("Data could not be loaded. Please check your data source and try again.")
 else:
-       with tab4:
+   with tab4:
             st.header("Data Visualizations")
             st.markdown("<div class='section'>", unsafe_allow_html=True)
         
@@ -431,10 +431,10 @@ else:
             st.markdown("</div>", unsafe_allow_html=True)
 
 
-        # Tab 5: Resource Allocation
-    if data.empty:
-    with tab3:
-        st.warning("Data could not be loaded. Please check your data source and try again.")
+    # Tab 5: Resource Allocation
+if data.empty:
+with tab5:
+    st.warning("Data could not be loaded. Please check your data source and try again.")
 else:
         with tab5:
             st.header("Resource Allocation")
@@ -534,7 +534,7 @@ else:
 
         # Tab 7: Prediction Cost
 if data.empty:
-    with tab3:
+    with tab7:
         st.warning("Data could not be loaded. Please check your data source and try again.")
 else:
         with tab7:
