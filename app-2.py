@@ -349,294 +349,294 @@ with tab2:
     st.markdown("</div>", unsafe_allow_html=True)
 
    # 📅 Tab 3: Claim Forecast with Prophet (Interactive + Filters)
-    with tab3:
-        st.header("Claim Forecast")
-        st.markdown("<div class='section'>", unsafe_allow_html=True)
-    
-        # ✅ Check for valid filtered data
-        if "filtered_data" in st.session_state and not st.session_state.filtered_data.empty:
-            df = st.session_state.filtered_data.copy()
-    
-            try:
-                if "START" in df.columns and "TOTALCOST" in df.columns:
-                    df['START'] = pd.to_datetime(df['START'], errors='coerce').dt.tz_localize(None)
-                    df.dropna(subset=['START'], inplace=True)
-                    df.sort_values('START', inplace=True)
-    
-                    df = df[df['TOTALCOST'] >= 0]
-                    df['START_MONTH'] = df['START'].dt.to_period('M').dt.to_timestamp()
-                    df['TOTALCOST'] = pd.to_numeric(df['TOTALCOST'], errors='coerce')
-    
-                    monthly_cost = df.groupby('START_MONTH')['TOTALCOST'].sum()
-                    monthly_cost_clean = monthly_cost.dropna()
-                    monthly_cost_clean = monthly_cost_clean[~monthly_cost_clean.isin([np.inf, -np.inf])]
-                    monthly_cost_recent = monthly_cost_clean[-36:]
-    
-                    prophet_df = monthly_cost_recent.reset_index()
-                    prophet_df.columns = ['ds', 'y']
-    
-                    model = Prophet(changepoint_prior_scale=0.05)
-                    model.fit(prophet_df)
-                    future = model.make_future_dataframe(periods=60, freq='MS')
-                    forecast = model.predict(future)
-    
-                    st.subheader("Interactive Forecast Plot (Next 5 Years)")
-                    fig_plotly = px.line(forecast, x='ds', y='yhat',
-                                         labels={'ds': 'Date', 'yhat': 'Predicted Claim Cost'},
-                                         title='Forecast of Monthly Claim Costs')
-                    st.plotly_chart(fig_plotly, use_container_width=True)
-    
-                    st.write("Forecast Table (Tail):")
-                    st.dataframe(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail())
-                else:
-                    st.warning("Columns 'START' and 'TOTALCOST' not found in the dataset.")
-            except Exception as e:
-                st.error(f"Error generating claim forecast with Prophet: {e}")
-        else:
-            st.warning("No filtered data available. Please apply filters in the sidebar or ensure data is loaded.")
-    
-        st.markdown("</div>", unsafe_allow_html=True)
+with tab3:
+    st.header("Claim Forecast")
+    st.markdown("<div class='section'>", unsafe_allow_html=True)
+
+    # ✅ Check for valid filtered data
+    if "filtered_data" in st.session_state and not st.session_state.filtered_data.empty:
+        df = st.session_state.filtered_data.copy()
+
+        try:
+            if "START" in df.columns and "TOTALCOST" in df.columns:
+                df['START'] = pd.to_datetime(df['START'], errors='coerce').dt.tz_localize(None)
+                df.dropna(subset=['START'], inplace=True)
+                df.sort_values('START', inplace=True)
+
+                df = df[df['TOTALCOST'] >= 0]
+                df['START_MONTH'] = df['START'].dt.to_period('M').dt.to_timestamp()
+                df['TOTALCOST'] = pd.to_numeric(df['TOTALCOST'], errors='coerce')
+
+                monthly_cost = df.groupby('START_MONTH')['TOTALCOST'].sum()
+                monthly_cost_clean = monthly_cost.dropna()
+                monthly_cost_clean = monthly_cost_clean[~monthly_cost_clean.isin([np.inf, -np.inf])]
+                monthly_cost_recent = monthly_cost_clean[-36:]
+
+                prophet_df = monthly_cost_recent.reset_index()
+                prophet_df.columns = ['ds', 'y']
+
+                model = Prophet(changepoint_prior_scale=0.05)
+                model.fit(prophet_df)
+                future = model.make_future_dataframe(periods=60, freq='MS')
+                forecast = model.predict(future)
+
+                st.subheader("Interactive Forecast Plot (Next 5 Years)")
+                fig_plotly = px.line(forecast, x='ds', y='yhat',
+                                     labels={'ds': 'Date', 'yhat': 'Predicted Claim Cost'},
+                                     title='Forecast of Monthly Claim Costs')
+                st.plotly_chart(fig_plotly, use_container_width=True)
+
+                st.write("Forecast Table (Tail):")
+                st.dataframe(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail())
+            else:
+                st.warning("Columns 'START' and 'TOTALCOST' not found in the dataset.")
+        except Exception as e:
+            st.error(f"Error generating claim forecast with Prophet: {e}")
+    else:
+        st.warning("No filtered data available. Please apply filters in the sidebar or ensure data is loaded.")
+
+    st.markdown("</div>", unsafe_allow_html=True)
      # Tab 4: Data Visualizations
-          with tab4:
-                st.header("Data Visualizations")
-                st.markdown("<div class='section'>", unsafe_allow_html=True)
-            
-                import plotly.express as px
-            
-                # ✅ Use filtered data if available
-                if "filtered_data" in st.session_state and not st.session_state.filtered_data.empty:
-                    df = st.session_state.filtered_data.copy()
-            
-                    try:
-                        st.subheader("Total Cost Distribution")
-                        fig_cost_dist = px.histogram(df, x="TOTALCOST", nbins=20, 
-                                                     labels={"TOTALCOST": "Total Cost ($)"}, 
-                                                     color_discrete_sequence=["#636EFA"])
-                        fig_cost_dist.update_layout(bargap=0.1, showlegend=False)
-                        st.plotly_chart(fig_cost_dist, use_container_width=True)
-                    except Exception as e:
-                        st.error(f"Error creating Total Cost Distribution chart:E {e}")
-                else:
-                    st.warning("No filtered data available. Please apply filters in the sidebar.")
-            
-                st.markdown("</div>", unsafe_allow_html=True)
+with tab4:
+    st.header("Data Visualizations")
+    st.markdown("<div class='section'>", unsafe_allow_html=True)
+
+    import plotly.express as px
+
+    # ✅ Use filtered data if available
+    if "filtered_data" in st.session_state and not st.session_state.filtered_data.empty:
+        df = st.session_state.filtered_data.copy()
+
+        try:
+            st.subheader("Total Cost Distribution")
+            fig_cost_dist = px.histogram(df, x="TOTALCOST", nbins=20, 
+                                         labels={"TOTALCOST": "Total Cost ($)"}, 
+                                         color_discrete_sequence=["#636EFA"])
+            fig_cost_dist.update_layout(bargap=0.1, showlegend=False)
+            st.plotly_chart(fig_cost_dist, use_container_width=True)
+        except Exception as e:
+            st.error(f"Error creating Total Cost Distribution chart:E {e}")
+    else:
+        st.warning("No filtered data available. Please apply filters in the sidebar.")
+
+    st.markdown("</div>", unsafe_allow_html=True)
             
             # Tab 5: Resource Allocation
-    with tab5:
-        st.header("Resource Allocation")
-        st.markdown("<div class='section'>", unsafe_allow_html=True)
+with tab5:
+    st.header("Resource Allocation")
+    st.markdown("<div class='section'>", unsafe_allow_html=True)
 
-        import plotly.express as px
-        if "filtered_data" in st.session_state and not st.session_state.filtered_data.empty:
-            df = st.session_state.filtered_data.copy()  # Corrected indentation here
+    import plotly.express as px
+    if "filtered_data" in st.session_state and not st.session_state.filtered_data.empty:
+        df = st.session_state.filtered_data.copy()  # Corrected indentation here
 
-           try:
-                st.subheader("Age Group vs Average Total Cost")
-                # Use your existing 'Age Group' column in the dataset directly
-                if 'AGE_GROUP' in data.columns:
-                    # Calculate average total cost per age group
-                    age_group_avg_cost = data.groupby('AGE_GROUP')['TOTALCOST'].mean().reset_index()
-            
-                    # Create bar chart using Plotly
-                    fig_age_group_avg_cost = px.bar(age_group_avg_cost, x="AGE_GROUP", y="TOTALCOST",
-                                                    labels={"Age Group": "AGE_GROUP", "TOTALCOST": "Average Total Cost ($)"},
-                                                    color="Age Group",
-                                                    color_discrete_sequence=["#636EFA"])
-                    fig_age_group_avg_cost.update_layout(showlegend=False)
-                    st.plotly_chart(fig_age_group_avg_cost, use_container_width=True)
-                else:
-                    st.warning("Age Group column is missing in the data.")
-            except Exception as e:
-                st.error(f"Error creating Age Group vs Average Total Cost chart: {e}")
-            
-                        try:
-                            st.subheader("Average Claim Cost by Race")
-                            avg_cost_by_race = st.session_state.filtered_data.groupby("RACE")["TOTALCOST"].mean().reset_index()
-                            if not avg_cost_by_race.empty:
-                                fig_regional_avg = px.bar(
-                                    avg_cost_by_race, x="RACE", y="TOTALCOST",
-                                    title="Average Claim Cost by Race",
-                                    labels={"RACE": "Race", "TOTALCOST": "Average Cost ($)"},
-                                    color_discrete_sequence=["#636EFA"]
-                                )
-                                fig_regional_avg.update_layout(showlegend=False)
-                                st.plotly_chart(fig_regional_avg, use_container_width=True)
-                            else:
-                                st.info("No data available for the selected filters.")
-                        except Exception as e:
-                            st.error(f"Error generating average cost by race visualization: {e}")
+       try:
+            st.subheader("Age Group vs Average Total Cost")
+            # Use your existing 'Age Group' column in the dataset directly
+            if 'AGE_GROUP' in data.columns:
+                # Calculate average total cost per age group
+                age_group_avg_cost = data.groupby('AGE_GROUP')['TOTALCOST'].mean().reset_index()
+        
+                # Create bar chart using Plotly
+                fig_age_group_avg_cost = px.bar(age_group_avg_cost, x="AGE_GROUP", y="TOTALCOST",
+                                                labels={"Age Group": "AGE_GROUP", "TOTALCOST": "Average Total Cost ($)"},
+                                                color="Age Group",
+                                                color_discrete_sequence=["#636EFA"])
+                fig_age_group_avg_cost.update_layout(showlegend=False)
+                st.plotly_chart(fig_age_group_avg_cost, use_container_width=True)
+            else:
+                st.warning("Age Group column is missing in the data.")
+        except Exception as e:
+            st.error(f"Error creating Age Group vs Average Total Cost chart: {e}")
+        
+                    try:
+                        st.subheader("Average Claim Cost by Race")
+                        avg_cost_by_race = st.session_state.filtered_data.groupby("RACE")["TOTALCOST"].mean().reset_index()
+                        if not avg_cost_by_race.empty:
+                            fig_regional_avg = px.bar(
+                                avg_cost_by_race, x="RACE", y="TOTALCOST",
+                                title="Average Claim Cost by Race",
+                                labels={"RACE": "Race", "TOTALCOST": "Average Cost ($)"},
+                                color_discrete_sequence=["#636EFA"]
+                            )
+                            fig_regional_avg.update_layout(showlegend=False)
+                            st.plotly_chart(fig_regional_avg, use_container_width=True)
+                        else:
+                            st.info("No data available for the selected filters.")
+                    except Exception as e:
+                        st.error(f"Error generating average cost by race visualization: {e}")
 
-            try:
-                st.subheader("Average Claim Cost by Encounter Class")
-                # Average Claim Cost by Encounter Class
-                avg_cost_by_encounter = st.session_state.filtered_data.groupby("ENCOUNTERCLASS")["TOTALCOST"].mean().reset_index()
-                if not avg_cost_by_encounter.empty:
-                    # Create bar chart using Plotly
-                    fig_avg_cost_by_encounter = px.bar(avg_cost_by_encounter, x="ENCOUNTERCLASS", y="TOTALCOST",
-                                                       labels={"ENCOUNTERCLASS": "Encounter Class", "TOTALCOST": "Average Claim Cost ($)"},
-                                                       color="ENCOUNTERCLASS",
-                                                       color_discrete_sequence=["#636EFA"])
-                    fig_avg_cost_by_encounter.update_layout(showlegend=False)
-                    st.plotly_chart(fig_avg_cost_by_encounter, use_container_width=True)
-            except Exception as e:
-                st.error(f"Error analyzing resource allocation: {e}")
+        try:
+            st.subheader("Average Claim Cost by Encounter Class")
+            # Average Claim Cost by Encounter Class
+            avg_cost_by_encounter = st.session_state.filtered_data.groupby("ENCOUNTERCLASS")["TOTALCOST"].mean().reset_index()
+            if not avg_cost_by_encounter.empty:
+                # Create bar chart using Plotly
+                fig_avg_cost_by_encounter = px.bar(avg_cost_by_encounter, x="ENCOUNTERCLASS", y="TOTALCOST",
+                                                   labels={"ENCOUNTERCLASS": "Encounter Class", "TOTALCOST": "Average Claim Cost ($)"},
+                                                   color="ENCOUNTERCLASS",
+                                                   color_discrete_sequence=["#636EFA"])
+                fig_avg_cost_by_encounter.update_layout(showlegend=False)
+                st.plotly_chart(fig_avg_cost_by_encounter, use_container_width=True)
+        except Exception as e:
+            st.error(f"Error analyzing resource allocation: {e}")
 
-            try:
-                st.subheader("Average Claim Cost by Gender")
-                avg_cost_by_gender = st.session_state.filtered_data.groupby("GENDER")["TOTALCOST"].mean().reset_index()
-                if not avg_cost_by_gender.empty:
-                    fig_gender_avg = px.bar(
-                        avg_cost_by_gender, x="GENDER", y="TOTALCOST",
-                        title="Average Claim Cost by Gender",
-                        labels={"GENDER": "Gender", "TOTALCOST": "Average Cost ($)"},
-                        color_discrete_sequence=["#636EFA"]
-                    )
-                    fig_gender_avg.update_layout(showlegend=False)
-                    st.plotly_chart(fig_gender_avg, use_container_width=True)
-                else:
-                    st.info("No data available for the selected filters.")
-            except Exception as e:
-                st.error(f"Error generating average cost by gender visualization: {e}")
+        try:
+            st.subheader("Average Claim Cost by Gender")
+            avg_cost_by_gender = st.session_state.filtered_data.groupby("GENDER")["TOTALCOST"].mean().reset_index()
+            if not avg_cost_by_gender.empty:
+                fig_gender_avg = px.bar(
+                    avg_cost_by_gender, x="GENDER", y="TOTALCOST",
+                    title="Average Claim Cost by Gender",
+                    labels={"GENDER": "Gender", "TOTALCOST": "Average Cost ($)"},
+                    color_discrete_sequence=["#636EFA"]
+                )
+                fig_gender_avg.update_layout(showlegend=False)
+                st.plotly_chart(fig_gender_avg, use_container_width=True)
+            else:
+                st.info("No data available for the selected filters.")
+        except Exception as e:
+            st.error(f"Error generating average cost by gender visualization: {e}")
 
-            try:
-                st.subheader("Average Claim Cost by Ethnicity")
-                avg_cost_by_ethnicity = st.session_state.filtered_data.groupby("ETHNICITY")["TOTALCOST"].mean().reset_index()
-                if not avg_cost_by_ethnicity.empty:
-                    fig_ethnicity_avg = px.bar(
-                        avg_cost_by_ethnicity, x="ETHNICITY", y="TOTALCOST",
-                        title="Average Claim Cost by Ethnicity",
-                        labels={"ETHNICITY": "Ethnicity", "TOTALCOST": "Average Cost ($)"},
-                        color_discrete_sequence=["#636EFA"]
-                    )
-                    fig_ethnicity_avg.update_layout(showlegend=False)
-                    st.plotly_chart(fig_ethnicity_avg, use_container_width=True)
-                else:
-                    st.info("No data available for the selected filters.")
-            except Exception as e:
-                st.error(f"Error generating average cost by ethnicity visualization: {e}")
+        try:
+            st.subheader("Average Claim Cost by Ethnicity")
+            avg_cost_by_ethnicity = st.session_state.filtered_data.groupby("ETHNICITY")["TOTALCOST"].mean().reset_index()
+            if not avg_cost_by_ethnicity.empty:
+                fig_ethnicity_avg = px.bar(
+                    avg_cost_by_ethnicity, x="ETHNICITY", y="TOTALCOST",
+                    title="Average Claim Cost by Ethnicity",
+                    labels={"ETHNICITY": "Ethnicity", "TOTALCOST": "Average Cost ($)"},
+                    color_discrete_sequence=["#636EFA"]
+                )
+                fig_ethnicity_avg.update_layout(showlegend=False)
+                st.plotly_chart(fig_ethnicity_avg, use_container_width=True)
+            else:
+                st.info("No data available for the selected filters.")
+        except Exception as e:
+            st.error(f"Error generating average cost by ethnicity visualization: {e}")
 
-            st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
 
         # Tab 7: Prediction Cost
-   with tab7:
-            st.header("Prediction Cost")
-            st.markdown("<div class='section'>", unsafe_allow_html=True)
+with tab7:
+        st.header("Prediction Cost")
+        st.markdown("<div class='section'>", unsafe_allow_html=True)
 
-            st.subheader("Enter Patient Information")
+        st.subheader("Enter Patient Information")
+        
+        # Check if categories exists and has required keys
+        if all(key in categories for key in ["GENDER", "RACE", "ETHNICITY", "ENCOUNTERCLASS", "CODE"]):
+            col1, col2 = st.columns(2)
             
-            # Check if categories exists and has required keys
-            if all(key in categories for key in ["GENDER", "RACE", "ETHNICITY", "ENCOUNTERCLASS", "CODE"]):
-                col1, col2 = st.columns(2)
+            with col1:
+                age = st.slider("Age", 0, 100, 30, key="pred_age")
+                gender = st.selectbox("Gender", categories["GENDER"], key="pred_gender")
+                race = st.selectbox("Race", categories["RACE"], key="pred_race")
+                ethnicity = st.selectbox("Ethnicity", categories["ETHNICITY"], key="pred_ethnicity")
+            
+            with col2:
+                income = st.slider("Income ($)", 0, 100000, 50000, key="pred_income")
+                encounter_class = st.selectbox("Encounter Class", categories["ENCOUNTERCLASS"], key="pred_encounter_class")
+                code = st.selectbox("Procedure Code", categories["CODE"], key="pred_code")
+                encounter_duration = st.slider("Encounter Duration (days)", 0, 30, 1, key="pred_encounter_duration")
+
+            # Create input data with all model-expected columns
+            input_data = pd.DataFrame({
+                "AGE": [age],
+                "GENDER": [str(gender)],
+                "RACE": [str(race)],
+                "ETHNICITY": [str(ethnicity)],
+                "INCOME": [income],
+                "ENCOUNTERCLASS": [str(encounter_class)],
+                "CODE": [str(code)],
+                "ENCOUNTER_DURATION": [encounter_duration],
+                "PAYER_COVERAGE": [0],
+                "BASE_ENCOUNTER_COST": [0],
+                "AVG_CLAIM_COST": [0],
+                "STATE": ["Unknown"],
+                "NUM_DIAG1": [0],
+                "HEALTHCARE_EXPENSES": [0],
+                "NUM_ENCOUNTERS": [0],
+                "NUM_DIAG2": [0]
+            })
+
+            try:
+                # Perform one-hot encoding
+                categorical_cols = ["GENDER", "RACE", "ETHNICITY", "ENCOUNTERCLASS", "CODE", "STATE"]
+                input_data_encoded = pd.get_dummies(input_data, columns=categorical_cols)
                 
-                with col1:
-                    age = st.slider("Age", 0, 100, 30, key="pred_age")
-                    gender = st.selectbox("Gender", categories["GENDER"], key="pred_gender")
-                    race = st.selectbox("Race", categories["RACE"], key="pred_race")
-                    ethnicity = st.selectbox("Ethnicity", categories["ETHNICITY"], key="pred_ethnicity")
-                
-                with col2:
-                    income = st.slider("Income ($)", 0, 100000, 50000, key="pred_income")
-                    encounter_class = st.selectbox("Encounter Class", categories["ENCOUNTERCLASS"], key="pred_encounter_class")
-                    code = st.selectbox("Procedure Code", categories["CODE"], key="pred_code")
-                    encounter_duration = st.slider("Encounter Duration (days)", 0, 30, 1, key="pred_encounter_duration")
+                # Reindex to match model_features
+                input_data_encoded = input_data_encoded.reindex(columns=model_features, fill_value=0)
 
-                # Create input data with all model-expected columns
-                input_data = pd.DataFrame({
-                    "AGE": [age],
-                    "GENDER": [str(gender)],
-                    "RACE": [str(race)],
-                    "ETHNICITY": [str(ethnicity)],
-                    "INCOME": [income],
-                    "ENCOUNTERCLASS": [str(encounter_class)],
-                    "CODE": [str(code)],
-                    "ENCOUNTER_DURATION": [encounter_duration],
-                    "PAYER_COVERAGE": [0],
-                    "BASE_ENCOUNTER_COST": [0],
-                    "AVG_CLAIM_COST": [0],
-                    "STATE": ["Unknown"],
-                    "NUM_DIAG1": [0],
-                    "HEALTHCARE_EXPENSES": [0],
-                    "NUM_ENCOUNTERS": [0],
-                    "NUM_DIAG2": [0]
-                })
+                if st.button("Predict Cost"):
+                    # Ensure input_data_encoded is a numpy array for prediction
+                    prediction_input = input_data_encoded.values
+                    prediction = model.predict(prediction_input)[0]
+                    st.write(f"### Predicted Claim Cost: ${prediction:.2f}")
+            except Exception as e:
+                st.error(f"Error making prediction: {e}")
+        else:
+            st.error("Missing required category data for prediction.")
 
-                try:
-                    # Perform one-hot encoding
-                    categorical_cols = ["GENDER", "RACE", "ETHNICITY", "ENCOUNTERCLASS", "CODE", "STATE"]
-                    input_data_encoded = pd.get_dummies(input_data, columns=categorical_cols)
-                    
-                    # Reindex to match model_features
-                    input_data_encoded = input_data_encoded.reindex(columns=model_features, fill_value=0)
-
-                    if st.button("Predict Cost"):
-                        # Ensure input_data_encoded is a numpy array for prediction
-                        prediction_input = input_data_encoded.values
-                        prediction = model.predict(prediction_input)[0]
-                        st.write(f"### Predicted Claim Cost: ${prediction:.2f}")
-                except Exception as e:
-                    st.error(f"Error making prediction: {e}")
-            else:
-                st.error("Missing required category data for prediction.")
-
-            st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
         # Tab 8: Data Export
-        with tab8:
-            st.header("Data Export")
-            st.markdown("<div class='section'>", unsafe_allow_html=True)
+with tab8:
+    st.header("Data Export")
+    st.markdown("<div class='section'>", unsafe_allow_html=True)
 
-            st.write("Select the export format and click the button to download the filtered dataset.")
-            export_formats = ["CSV"]
-            if XLSXWRITER_AVAILABLE:
-                export_formats.append("Excel")
-            if FPDF_AVAILABLE:
-                export_formats.append("PDF")
-            export_format = st.selectbox("Select Export Format", export_formats)
+    st.write("Select the export format and click the button to download the filtered dataset.")
+    export_formats = ["CSV"]
+    if XLSXWRITER_AVAILABLE:
+        export_formats.append("Excel")
+    if FPDF_AVAILABLE:
+        export_formats.append("PDF")
+    export_format = st.selectbox("Select Export Format", export_formats)
 
-            if st.button("Export Data"):
-                try:
-                    if export_format == "CSV":
-                        buffer = io.BytesIO()
-                        st.session_state.filtered_data.to_csv(buffer, index=False)
-                        buffer.seek(0)
-                        st.download_button(
-                            label="Download CSV File",
-                            data=buffer,
-                            file_name="filtered_data_export.csv",
-                            mime="text/csv",
-                            key="export_csv_button",
-                            use_container_width=True
-                        )
-                    elif export_format == "Excel" and XLSXWRITER_AVAILABLE:
-                        buffer = io.BytesIO()
-                        with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-                            st.session_state.filtered_data.to_excel(writer, index=False, sheet_name="Sheet1")
-                        buffer.seek(0)
-                        st.download_button(
-                            label="Download Excel File",
-                            data=buffer,
-                            file_name="filtered_data_export.xlsx",
-                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                            key="export_excel_button",
-                            use_container_width=True
-                        )
-                    elif export_format == "PDF" and FPDF_AVAILABLE:
-                        pdf = FPDF()
-                        pdf.add_page()
-                        pdf.set_font("Arial", size=12)
-                        for i, row in st.session_state.filtered_data.head(10).iterrows():
-                            pdf.cell(200, 10, txt=str(row.to_dict()), ln=True)
-                        pdf_output = pdf.output(dest="S").encode("latin1")
-                        st.download_button(
-                            label="Download PDF File",
-                            data=pdf_output,
-                            file_name="filtered_data_export.pdf",
-                            mime="application/pdf",
-                            key="export_pdf_button",
-                            use_container_width=True
-                        )
-                except Exception as e:
-                    st.error(f"Error exporting data: {e}")
+    if st.button("Export Data"):
+        try:
+            if export_format == "CSV":
+                buffer = io.BytesIO()
+                st.session_state.filtered_data.to_csv(buffer, index=False)
+                buffer.seek(0)
+                st.download_button(
+                    label="Download CSV File",
+                    data=buffer,
+                    file_name="filtered_data_export.csv",
+                    mime="text/csv",
+                    key="export_csv_button",
+                    use_container_width=True
+                )
+            elif export_format == "Excel" and XLSXWRITER_AVAILABLE:
+                buffer = io.BytesIO()
+                with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+                    st.session_state.filtered_data.to_excel(writer, index=False, sheet_name="Sheet1")
+                buffer.seek(0)
+                st.download_button(
+                    label="Download Excel File",
+                    data=buffer,
+                    file_name="filtered_data_export.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    key="export_excel_button",
+                    use_container_width=True
+                )
+            elif export_format == "PDF" and FPDF_AVAILABLE:
+                pdf = FPDF()
+                pdf.add_page()
+                pdf.set_font("Arial", size=12)
+                for i, row in st.session_state.filtered_data.head(10).iterrows():
+                    pdf.cell(200, 10, txt=str(row.to_dict()), ln=True)
+                pdf_output = pdf.output(dest="S").encode("latin1")
+                st.download_button(
+                    label="Download PDF File",
+                    data=pdf_output,
+                    file_name="filtered_data_export.pdf",
+                    mime="application/pdf",
+                    key="export_pdf_button",
+                    use_container_width=True
+                )
+        except Exception as e:
+            st.error(f"Error exporting data: {e}")
 
-            st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
