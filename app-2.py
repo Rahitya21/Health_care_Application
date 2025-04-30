@@ -359,11 +359,7 @@ else:
                     plt.tight_layout()
                     st.pyplot(fig1)
         
-                    # Trend and Seasonality
-                    st.subheader("Trend & Seasonality")
-                    fig2 = model.plot_components(forecast)
-                    st.pyplot(fig2)
-        
+                    
                 else:
                     st.warning("Columns 'START' and 'TOTALCOST' not found in the dataset.")
             except Exception as e:
