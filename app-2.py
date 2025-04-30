@@ -431,7 +431,7 @@ with tab5:
         df = st.session_state.filtered_data.copy()  # Corrected indentation here
 
        try:
-            st.subheader("Age Group vs Average Total Cost")
+           st.subheader("Age Group vs Average Total Cost")
             # Use your existing 'Age Group' column in the dataset directly
             if 'AGE_GROUP' in data.columns:
                 # Calculate average total cost per age group
