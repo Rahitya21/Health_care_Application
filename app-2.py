@@ -313,81 +313,81 @@ else:
             st.warning("Data could not be loaded. Please check your data source and try again.")
     else:
         # 📅 Tab 3: Claim Forecast with Prophet (Interactive + Filters)
-with tab3:
-    st.header("Claim Forecast")
-    st.markdown("<div class='section'>", unsafe_allow_html=True)
-
-    try:
-        # 🧽 Filters Section (Moved to Sidebar)
-        st.sidebar.subheader("Apply Filters")
-        age_filter = st.sidebar.multiselect("Select Age(s):", options=sorted(data['AGE'].dropna().unique()), default=None)
-        gender_filter = st.sidebar.multiselect("Select Gender(s):", options=data['GENDER'].dropna().unique(), default=None)
-        race_filter = st.sidebar.multiselect("Select Race(s):", options=data['RACE'].dropna().unique(), default=None)
-        ethnicity_filter = st.sidebar.multiselect("Select Ethnicity:", options=data['ETHNICITY'].dropna().unique(), default=None)
-        encounter_filter = st.sidebar.multiselect("Select Encounter Type:", options=data['ENCOUNTERCLASS'].dropna().unique(), default=None)
-
-        df = data.copy()
-
-        # Apply Filters
-        if age_filter:
-            df = df[df['AGE'].isin(age_filter)]
-        if gender_filter:
-            df = df[df['GENDER'].isin(gender_filter)]
-        if race_filter:
-            df = df[df['RACE'].isin(race_filter)]
-        if ethnicity_filter:
-            df = df[df['ETHNICITY'].isin(ethnicity_filter)]
-        if encounter_filter:
-            df = df[df['ENCOUNTERCLASS'].isin(encounter_filter)]
-
-        # Display filtered data preview
-        st.write(f"Filtered dataset size: {df.shape[0]}")
-        st.write("Filtered Data Preview (Before Forecasting):")
-        st.dataframe(df[['START', 'TOTALCOST', 'AGE', 'GENDER', 'RACE', 'ETHNICITY', 'ENCOUNTERCLASS']].head())
-
-        if "START" in df.columns and "TOTALCOST" in df.columns:
-            # STEP 4: Prepare data
-            df['START'] = pd.to_datetime(df['START'], errors='coerce').dt.tz_localize(None)
-            df.dropna(subset=['START'], inplace=True)
-            df.sort_values('START', inplace=True)
-
-            # Remove negative claim costs
-            df = df[df['TOTALCOST'] >= 0]
-
-            df['START_MONTH'] = df['START'].dt.to_period('M').dt.to_timestamp()
-            df['TOTALCOST'] = pd.to_numeric(df['TOTALCOST'], errors='coerce')
-            monthly_cost = df.groupby('START_MONTH')['TOTALCOST'].sum()
-            monthly_cost_clean = monthly_cost.dropna()
-            monthly_cost_clean = monthly_cost_clean[~monthly_cost_clean.isin([np.inf, -np.inf])]
-            monthly_cost_recent = monthly_cost_clean[-36:]
-
-            prophet_df = monthly_cost_recent.reset_index()
-            prophet_df.columns = ['ds', 'y']
-
-            # Prophet Forecast with adjusted changepoint_prior_scale
-            model = Prophet(changepoint_prior_scale=0.05)  # Adjusting flexibility of trend
-            model.fit(prophet_df)
-            future = model.make_future_dataframe(periods=60, freq='MS')
-            forecast = model.predict(future)
-
-            # Plotly Interactive Plot
-            st.subheader("Interactive Forecast Plot (Next 5 Years)")
-            fig_plotly = px.line(forecast, x='ds', y='yhat', labels={'ds': 'Date', 'yhat': 'Predicted Claim Cost'},
-                                 title='Forecast of Monthly Claim Costs')
-            fig_plotly.add_scatter(x=forecast['ds'], y=forecast['yhat_upper'], mode='lines', name='Upper Bound')
-            fig_plotly.add_scatter(x=forecast['ds'], y=forecast['yhat_lower'], mode='lines', name='Lower Bound')
-            st.plotly_chart(fig_plotly, use_container_width=True)
-
-            # Forecast Table
-            st.write("Forecast Table (Tail):")
-            st.dataframe(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail())
-
-        else:
-            st.warning("Columns 'START' and 'TOTALCOST' not found in the dataset.")
-    except Exception as e:
-        st.error(f"Error generating claim forecast with Prophet: {e}")
-
-    st.markdown("</div>", unsafe_allow_html=True)
+        with tab3:
+            st.header("Claim Forecast")
+            st.markdown("<div class='section'>", unsafe_allow_html=True)
+        
+            try:
+                # 🧽 Filters Section (Moved to Sidebar)
+                st.sidebar.subheader("Apply Filters")
+                age_filter = st.sidebar.multiselect("Select Age(s):", options=sorted(data['AGE'].dropna().unique()), default=None)
+                gender_filter = st.sidebar.multiselect("Select Gender(s):", options=data['GENDER'].dropna().unique(), default=None)
+                race_filter = st.sidebar.multiselect("Select Race(s):", options=data['RACE'].dropna().unique(), default=None)
+                ethnicity_filter = st.sidebar.multiselect("Select Ethnicity:", options=data['ETHNICITY'].dropna().unique(), default=None)
+                encounter_filter = st.sidebar.multiselect("Select Encounter Type:", options=data['ENCOUNTERCLASS'].dropna().unique(), default=None)
+        
+                df = data.copy()
+        
+                # Apply Filters
+                if age_filter:
+                    df = df[df['AGE'].isin(age_filter)]
+                if gender_filter:
+                    df = df[df['GENDER'].isin(gender_filter)]
+                if race_filter:
+                    df = df[df['RACE'].isin(race_filter)]
+                if ethnicity_filter:
+                    df = df[df['ETHNICITY'].isin(ethnicity_filter)]
+                if encounter_filter:
+                    df = df[df['ENCOUNTERCLASS'].isin(encounter_filter)]
+        
+                # Display filtered data preview
+                st.write(f"Filtered dataset size: {df.shape[0]}")
+                st.write("Filtered Data Preview (Before Forecasting):")
+                st.dataframe(df[['START', 'TOTALCOST', 'AGE', 'GENDER', 'RACE', 'ETHNICITY', 'ENCOUNTERCLASS']].head())
+        
+                if "START" in df.columns and "TOTALCOST" in df.columns:
+                    # STEP 4: Prepare data
+                    df['START'] = pd.to_datetime(df['START'], errors='coerce').dt.tz_localize(None)
+                    df.dropna(subset=['START'], inplace=True)
+                    df.sort_values('START', inplace=True)
+        
+                    # Remove negative claim costs
+                    df = df[df['TOTALCOST'] >= 0]
+        
+                    df['START_MONTH'] = df['START'].dt.to_period('M').dt.to_timestamp()
+                    df['TOTALCOST'] = pd.to_numeric(df['TOTALCOST'], errors='coerce')
+                    monthly_cost = df.groupby('START_MONTH')['TOTALCOST'].sum()
+                    monthly_cost_clean = monthly_cost.dropna()
+                    monthly_cost_clean = monthly_cost_clean[~monthly_cost_clean.isin([np.inf, -np.inf])]
+                    monthly_cost_recent = monthly_cost_clean[-36:]
+        
+                    prophet_df = monthly_cost_recent.reset_index()
+                    prophet_df.columns = ['ds', 'y']
+        
+                    # Prophet Forecast with adjusted changepoint_prior_scale
+                    model = Prophet(changepoint_prior_scale=0.05)  # Adjusting flexibility of trend
+                    model.fit(prophet_df)
+                    future = model.make_future_dataframe(periods=60, freq='MS')
+                    forecast = model.predict(future)
+        
+                    # Plotly Interactive Plot
+                    st.subheader("Interactive Forecast Plot (Next 5 Years)")
+                    fig_plotly = px.line(forecast, x='ds', y='yhat', labels={'ds': 'Date', 'yhat': 'Predicted Claim Cost'},
+                                         title='Forecast of Monthly Claim Costs')
+                    fig_plotly.add_scatter(x=forecast['ds'], y=forecast['yhat_upper'], mode='lines', name='Upper Bound')
+                    fig_plotly.add_scatter(x=forecast['ds'], y=forecast['yhat_lower'], mode='lines', name='Lower Bound')
+                    st.plotly_chart(fig_plotly, use_container_width=True)
+        
+                    # Forecast Table
+                    st.write("Forecast Table (Tail):")
+                    st.dataframe(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail())
+        
+                else:
+                    st.warning("Columns 'START' and 'TOTALCOST' not found in the dataset.")
+            except Exception as e:
+                st.error(f"Error generating claim forecast with Prophet: {e}")
+        
+            st.markdown("</div>", unsafe_allow_html=True)
 
         # Tab 4: Data Visualizations
         with tab4:
