@@ -520,25 +520,27 @@ with tab5:
 
         # Tab 7: Prediction Cost
 # Tab 7: Prediction Cost
+# Tab 7: Prediction Cost
 with tab7:
     st.header("Prediction Cost")
     st.markdown("<div class='section'>", unsafe_allow_html=True)
 
     st.subheader("Enter Patient Information")
 
-    # Define categories dictionary safely from the data
-    if 'data' in locals() and isinstance(data, pd.DataFrame):
+    # Safely define categories dictionary from the data DataFrame
+    try:
+        categories = {
+            "GENDER": sorted(data["GENDER"].dropna().unique()),
+            "RACE": sorted(data["RACE"].dropna().unique()),
+            "ETHNICITY": sorted(data["ETHNICITY"].dropna().unique()),
+            "ENCOUNTERCLASS": sorted(data["ENCOUNTERCLASS"].dropna().unique()),
+            "CODE": sorted(data["CODE"].dropna().unique()),
+        }
+    except Exception as e:
         categories = {}
-        try:
-            for col in ["GENDER", "RACE", "ETHNICITY", "ENCOUNTERCLASS", "CODE"]:
-                if col in data.columns:
-                    categories[col] = sorted(data[col].dropna().unique())
-        except Exception as e:
-            st.error(f"Error preparing category options: {e}")
-    else:
-        categories = {}
+        st.error(f"Error loading category values: {e}")
 
-    # Check if all required categories exist
+    # Check if all required keys are present in the categories dictionary
     if all(key in categories for key in ["GENDER", "RACE", "ETHNICITY", "ENCOUNTERCLASS", "CODE"]):
         col1, col2 = st.columns(2)
 
@@ -575,11 +577,11 @@ with tab7:
         })
 
         try:
-            # Perform one-hot encoding
+            # Perform one-hot encoding for categorical features
             categorical_cols = ["GENDER", "RACE", "ETHNICITY", "ENCOUNTERCLASS", "CODE", "STATE"]
             input_data_encoded = pd.get_dummies(input_data, columns=categorical_cols)
 
-            # Reindex to match model_features
+            # Reindex to match the model's expected feature set
             input_data_encoded = input_data_encoded.reindex(columns=model_features, fill_value=0)
 
             if st.button("Predict Cost"):
@@ -592,7 +594,6 @@ with tab7:
         st.error("Missing required category data for prediction.")
 
     st.markdown("</div>", unsafe_allow_html=True)
-
 
         # Tab 8: Data Export
 with tab8:
