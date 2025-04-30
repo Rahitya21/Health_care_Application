@@ -9,3 +9,4 @@ plotly
 xgboost
 prophet
 matplotlib
+plotly
