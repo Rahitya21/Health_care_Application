@@ -196,11 +196,10 @@ else:
 
                     # Prepare features for one-hot encoding
                     features = [
-   "AGE_GROUP", "GENDER", "RACE", "ETHNICITY", "INCOME", "ENCOUNTERCLASS", "CODE", "ENCOUNTER_DURATION",
-   "PAYER_COVERAGE", "BASE_ENCOUNTER_COST", "AVG_CLAIM_COST", "STATE",
-   "NUM_DIAG1", "HEALTHCARE_EXPENSES", "NUM_ENCOUNTERS", "NUM_DIAG2", "HEALTHCARE_COVERAGE"
-]
-
+                       "AGE_GROUP", "GENDER", "RACE", "ETHNICITY", "INCOME", "ENCOUNTERCLASS", "CODE", "ENCOUNTER_DURATION",
+                        "PAYER_COVERAGE", "BASE_ENCOUNTER_COST", "AVG_CLAIM_COST", "STATE",
+                        "NUM_DIAG1", "HEALTHCARE_EXPENSES", "NUM_ENCOUNTERS", "NUM_DIAG2"
+                    ]
                     X = data[features]
 
                     # Define categorical columns
@@ -238,43 +237,43 @@ else:
             st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
-   
     # Sidebar Filters
-st.sidebar.header("Filter Data")
+    st.sidebar.header("Filter Data")
 
-if not data.empty and "START_YEAR" in data.columns:
-    years = sorted(list(data["START_YEAR"].unique()))
-    start_year = st.sidebar.selectbox("Start Year", years, index=0)
-    end_year = st.sidebar.selectbox("End Year", years, index=len(years)-1)
+    if not data.empty and "START_YEAR" in data.columns:
+        years = sorted(list(data["START_YEAR"].unique()))
+        start_year = st.sidebar.selectbox("Start Year", years, index=0)
+        end_year = st.sidebar.selectbox("End Year", years, index=len(years)-1)
 
-    # Single-select dropdowns
-    age_group_options = sorted(data["AGE_GROUP"].dropna().unique())
-    gender_options = sorted(data["GENDER"].dropna().unique())
-    race_options = sorted(data["RACE"].dropna().unique())
-    ethnicity_options = sorted(data["ETHNICITY"].dropna().unique())
-    encounter_class_options = sorted(data["ENCOUNTERCLASS"].dropna().unique())
-
-    selected_age_group = st.sidebar.selectbox("Age Group", age_group_options)
-    selected_gender = st.sidebar.selectbox("Gender", gender_options)
-    selected_race = st.sidebar.selectbox("Race", race_options)
-    selected_ethnicity = st.sidebar.selectbox("Ethnicity", ethnicity_options)
-    selected_encounter = st.sidebar.selectbox("Encounter Class", encounter_class_options)
-
-    # Apply filters
-    filtered_data = data[
-        (data["START_YEAR"] >= start_year) &
-        (data["START_YEAR"] <= end_year) &
-        (data["AGE_GROUP"] == selected_age_group) &
-        (data["GENDER"] == selected_gender) &
-        (data["RACE"] == selected_race) &
-        (data["ETHNICITY"] == selected_ethnicity) &
-        (data["ENCOUNTERCLASS"] == selected_encounter)
-    ]
-
-    # Save to session state
-    st.session_state.filtered_data = filtered_data
-else:
-    st.sidebar.warning("Data not loaded or missing required columns.")
+        
+        # Single-select dropdowns
+        age_group_options = sorted(data["AGE_GROUP"].dropna().unique())
+        gender_options = sorted(data["GENDER"].dropna().unique())
+        race_options = sorted(data["RACE"].dropna().unique())
+        ethnicity_options = sorted(data["ETHNICITY"].dropna().unique())
+        encounter_class_options = sorted(data["ENCOUNTERCLASS"].dropna().unique())
+    
+        selected_age_group = st.sidebar.selectbox("Age Group", age_group_options)
+        selected_gender = st.sidebar.selectbox("Gender", gender_options)
+        selected_race = st.sidebar.selectbox("Race", race_options)
+        selected_ethnicity = st.sidebar.selectbox("Ethnicity", ethnicity_options)
+        selected_encounter = st.sidebar.selectbox("Encounter Class", encounter_class_options)
+    
+        # Apply filters
+        filtered_data = data[
+            (data["START_YEAR"] >= start_year) &
+            (data["START_YEAR"] <= end_year) &
+            (data["AGE_GROUP"] == selected_age_group) &
+            (data["GENDER"] == selected_gender) &
+            (data["RACE"] == selected_race) &
+            (data["ETHNICITY"] == selected_ethnicity) &
+            (data["ENCOUNTERCLASS"] == selected_encounter)
+        ]
+    
+        # Save to session state
+        st.session_state.filtered_data = filtered_data
+    else:
+        st.sidebar.warning("Data not loaded or missing required columns.")
 
      # Create tabs
 tab2, tab3, tab4, tab5, tab7, tab8 = st.tabs([
