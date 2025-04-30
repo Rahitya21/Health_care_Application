@@ -308,50 +308,62 @@ else:
         with tab3, tab4, tab5, tab7, tab8:
             st.warning("Data could not be loaded. Please check your data source and try again.")
     else:
-        # Tab 3: Claim Forecast
-        with tab3:
-            st.header("Claim Forecast")
-            st.markdown("<div class='section'>", unsafe_allow_html=True)
+        # 📅 Tab 3: Claim Forecast with Prophet
+with tab3:
+    st.header("Claim Forecast")
+    st.markdown("<div class='section'>", unsafe_allow_html=True)
 
-            try:
-                if "START_YEAR" in data.columns and "TOTALCOST" in data.columns:
-                    yearly_costs = data.groupby("START_YEAR")["TOTALCOST"].sum().reset_index()
-                    if len(yearly_costs) >= 2:  # Need at least 2 data points for linear regression
-                        X = yearly_costs["START_YEAR"].values.reshape(-1, 1)
-                        y = yearly_costs["TOTALCOST"].values
-                        forecast_model = LinearRegression()
-                        forecast_model.fit(X, y)
-                        current_year = data["START_YEAR"].max()
-                        future_years = np.array([current_year + i for i in range(1, 6)]).reshape(-1, 1)
-                        forecasted_costs = forecast_model.predict(future_years)
-                        
-                        st.write("**Claim Cost Forecast for the Next 5 Years:**")
-                        forecast_df = pd.DataFrame({
-                            "Year": future_years.flatten(),
-                            "Forecasted Cost ($)": forecasted_costs
-                        })
-                        st.write(forecast_df)
-                        
-                        historical_df = pd.DataFrame({
-                            "Year": yearly_costs["START_YEAR"],
-                            "Cost": yearly_costs["TOTALCOST"],
-                            "Type": "Historical"
-                        })
-                        forecast_df_plot = pd.DataFrame({
-                            "Year": future_years.flatten(),
-                            "Cost": forecasted_costs,
-                            "Type": "Forecasted"
-                        })
-                        plot_df = pd.concat([historical_df, forecast_df_plot])
-                        st.line_chart(plot_df.set_index("Year")["Cost"])
-                    else:
-                        st.warning("Insufficient data for forecasting. Need at least 2 different years of data.")
-                else:
-                    st.warning("Required columns for forecasting not found.")
-            except Exception as e:
-                st.error(f"Error generating claim forecast: {e}")
+    try:
+        if "START" in data.columns and "TOTALCOST" in data.columns:
+            # Prepare and clean data
+            df = data.copy()
+            df['START'] = pd.to_datetime(df['START'], errors='coerce').dt.tz_localize(None)
+            df.dropna(subset=['START'], inplace=True)
+            df.sort_values('START', inplace=True)
 
-            st.markdown("</div>", unsafe_allow_html=True)
+            df['START_MONTH'] = df['START'].dt.to_period('M').dt.to_timestamp()
+            df['TOTALCOST'] = pd.to_numeric(df['TOTALCOST'], errors='coerce')
+
+            monthly_cost = df.groupby('START_MONTH')['TOTALCOST'].sum()
+            monthly_cost_clean = monthly_cost.dropna()
+            monthly_cost_clean = monthly_cost_clean[~monthly_cost_clean.isin([np.inf, -np.inf])]
+
+            if len(monthly_cost_clean) >= 24:  # Require at least 2 years of data for trend
+                # Focus on last 3 years
+                monthly_cost_recent = monthly_cost_clean[-36:]
+
+                prophet_df = monthly_cost_recent.reset_index()
+                prophet_df.columns = ['ds', 'y']
+
+                model = Prophet()
+                model.fit(prophet_df)
+
+                future = model.make_future_dataframe(periods=60, freq='MS')
+                forecast = model.predict(future)
+
+                st.write("**Prophet Forecast for Monthly Claim Costs (Next 5 Years):**")
+                st.dataframe(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail())
+
+                # Plot forecast
+                fig1 = model.plot(forecast)
+                plt.title("5-Year Forecast of Monthly Claim Costs")
+                plt.xlabel("Date")
+                plt.ylabel("Total Cost ($)")
+                plt.grid(True)
+                st.pyplot(fig1)
+
+                # Plot trend & seasonality
+                st.subheader("Trend & Seasonality")
+                fig2 = model.plot_components(forecast)
+                st.pyplot(fig2)
+            else:
+                st.warning("At least 2 years of monthly data is required for Prophet forecast.")
+        else:
+            st.warning("Columns 'START' and 'TOTALCOST' not found in the dataset.")
+    except Exception as e:
+        st.error(f"Error generating claim forecast with Prophet: {e}")
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
         # Tab 4: Data Visualizations
         with tab4:
