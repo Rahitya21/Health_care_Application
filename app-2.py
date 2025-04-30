@@ -402,11 +402,11 @@ else:
     
         st.markdown("</div>", unsafe_allow_html=True)
      # Tab 4: Data Visualizations
-if data.empty:
-with tab4:
-    st.warning("Data could not be loaded. Please check your data source and try again.")
-else:
-   with tab4:
+    if data.empty:
+            with tab4:
+                st.warning("Data could not be loaded. Please check your data source and try again.")
+    else:
+       with tab4:
             st.header("Data Visualizations")
             st.markdown("<div class='section'>", unsafe_allow_html=True)
         
