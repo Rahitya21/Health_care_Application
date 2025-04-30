@@ -353,95 +353,79 @@ if data.empty:
     with tab3, tab4, tab5, tab7, tab8:
         st.warning("Data could not be loaded. Please check your data source and try again.")
 else:
-    # 📅 Tab 3: Claim Forecast with Prophet (Interactive + Filters)
-    with tab3:
-        st.header("Claim Forecast")
-        st.markdown("<div class='section'>", unsafe_allow_html=True)
-    
+   # 📅 Tab 3: Claim Forecast with Prophet (Interactive + Filters)
+with tab3:
+    st.header("Claim Forecast")
+    st.markdown("<div class='section'>", unsafe_allow_html=True)
+
+    # ✅ Check for valid filtered data
+    if "filtered_data" in st.session_state and not st.session_state.filtered_data.empty:
+        df = st.session_state.filtered_data.copy()
+
         try:
-            # 🧽 Filters Section (Moved to Sidebar)
-            st.sidebar.subheader("Apply Filters")
-            age_filter = st.sidebar.multiselect("Select Age(s):", options=sorted(data['AGE'].dropna().unique()), default=None)
-            gender_filter = st.sidebar.multiselect("Select Gender(s):", options=data['GENDER'].dropna().unique(), default=None)
-            race_filter = st.sidebar.multiselect("Select Race(s):", options=data['RACE'].dropna().unique(), default=None)
-            ethnicity_filter = st.sidebar.multiselect("Select Ethnicity:", options=data['ETHNICITY'].dropna().unique(), default=None)
-            encounter_filter = st.sidebar.multiselect("Select Encounter Type:", options=data['ENCOUNTERCLASS'].dropna().unique(), default=None)
-    
-            df = data.copy()
-    
-            # Apply Filters
-            if age_filter:
-                df = df[df['AGE'].isin(age_filter)]
-            if gender_filter:
-                df = df[df['GENDER'].isin(gender_filter)]
-            if race_filter:
-                df = df[df['RACE'].isin(race_filter)]
-            if ethnicity_filter:
-                df = df[df['ETHNICITY'].isin(ethnicity_filter)]
-            if encounter_filter:
-                df = df[df['ENCOUNTERCLASS'].isin(encounter_filter)]
-    
-          
-    
             if "START" in df.columns and "TOTALCOST" in df.columns:
-                # STEP 4: Prepare data
                 df['START'] = pd.to_datetime(df['START'], errors='coerce').dt.tz_localize(None)
                 df.dropna(subset=['START'], inplace=True)
                 df.sort_values('START', inplace=True)
-    
-                # Remove negative claim costs
+
                 df = df[df['TOTALCOST'] >= 0]
-    
                 df['START_MONTH'] = df['START'].dt.to_period('M').dt.to_timestamp()
                 df['TOTALCOST'] = pd.to_numeric(df['TOTALCOST'], errors='coerce')
+
                 monthly_cost = df.groupby('START_MONTH')['TOTALCOST'].sum()
                 monthly_cost_clean = monthly_cost.dropna()
                 monthly_cost_clean = monthly_cost_clean[~monthly_cost_clean.isin([np.inf, -np.inf])]
                 monthly_cost_recent = monthly_cost_clean[-36:]
-    
+
                 prophet_df = monthly_cost_recent.reset_index()
                 prophet_df.columns = ['ds', 'y']
-    
-                # Prophet Forecast with adjusted changepoint_prior_scale
-                model = Prophet(changepoint_prior_scale=0.05)  # Adjusting flexibility of trend
+
+                model = Prophet(changepoint_prior_scale=0.05)
                 model.fit(prophet_df)
                 future = model.make_future_dataframe(periods=60, freq='MS')
                 forecast = model.predict(future)
-    
-                # Plotly Interactive Plot
+
                 st.subheader("Interactive Forecast Plot (Next 5 Years)")
-                fig_plotly = px.line(forecast, x='ds', y='yhat', labels={'ds': 'Date', 'yhat': 'Predicted Claim Cost'},
+                fig_plotly = px.line(forecast, x='ds', y='yhat',
+                                     labels={'ds': 'Date', 'yhat': 'Predicted Claim Cost'},
                                      title='Forecast of Monthly Claim Costs')
                 st.plotly_chart(fig_plotly, use_container_width=True)
-    
-                # Forecast Table
+
                 st.write("Forecast Table (Tail):")
                 st.dataframe(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail())
-    
             else:
                 st.warning("Columns 'START' and 'TOTALCOST' not found in the dataset.")
         except Exception as e:
             st.error(f"Error generating claim forecast with Prophet: {e}")
-    
-        st.markdown("</div>", unsafe_allow_html=True)
+    else:
+        st.warning("No filtered data available. Please apply filters in the sidebar or ensure data is loaded.")
 
-        # Tab 4: Data Visualizations
-        with tab4:
-            st.header("Data Visualizations")
-            st.markdown("<div class='section'>", unsafe_allow_html=True)
-            
-            import plotly.express as px
-            
-            try:
-                st.subheader("Total Cost Distribution")
-                fig_cost_dist = px.histogram(data, x="TOTALCOST", nbins=20, 
-                                         labels={"TOTALCOST": "Total Cost ($)"}, color_discrete_sequence=["#636EFA"])
-                fig_cost_dist.update_layout(bargap=0.1, showlegend=False)
-                st.plotly_chart(fig_cost_dist, use_container_width=True)
-            except Exception as e:
-                st.error(f"Error creating Total Cost Distribution chart: {e}")
-            
-            st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+     # Tab 4: Data Visualizations
+       with tab4:
+    st.header("Data Visualizations")
+    st.markdown("<div class='section'>", unsafe_allow_html=True)
+
+    import plotly.express as px
+
+    # ✅ Use filtered data if available
+    if "filtered_data" in st.session_state and not st.session_state.filtered_data.empty:
+        df = st.session_state.filtered_data.copy()
+
+        try:
+            st.subheader("Total Cost Distribution")
+            fig_cost_dist = px.histogram(df, x="TOTALCOST", nbins=20, 
+                                         labels={"TOTALCOST": "Total Cost ($)"}, 
+                                         color_discrete_sequence=["#636EFA"])
+            fig_cost_dist.update_layout(bargap=0.1, showlegend=False)
+            st.plotly_chart(fig_cost_dist, use_container_width=True)
+        except Exception as e:
+            st.error(f"Error creating Total Cost Distribution chart: {e}")
+    else:
+        st.warning("No filtered data available. Please apply filters in the sidebar.")
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
 
         # Tab 5: Resource Allocation
         with tab5:
@@ -449,6 +433,8 @@ else:
             st.markdown("<div class='section'>", unsafe_allow_html=True)
             
             import plotly.express as px
+            if "filtered_data" in st.session_state and not st.session_state.filtered_data.empty:
+        df = st.session_state.filtered_data.copy()
             
             try:
                 st.subheader("Age Group vs Average Total Cost")
