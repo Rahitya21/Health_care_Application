@@ -74,9 +74,15 @@ h1, h2, h3 {
 </style>
 """, unsafe_allow_html=True)
 
+import streamlit as st
+import pandas as pd
+import joblib
+
 # Initialize session state for login and filtered data
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
+if "filtered_data" not in st.session_state:
+    st.session_state.filtered_data = pd.DataFrame()
 
 # Login Page
 if not st.session_state.logged_in:
@@ -101,9 +107,21 @@ else:
     try:
         data = pd.read_csv("final_merged_synthea_cleaned98.csv")
         model = joblib.load("xgb_model_new.pkl")
+
+        if not data.empty:
+            st.session_state.filtered_data = data.copy()
+
     except Exception as e:
         st.error(f"Error loading dataset or model: {e}")
-        data = pd.DataFrame()  # Initialize with an empty DataFrame in case of error
+        data = pd.DataFrame()  # Safe fallback
+
+    # You can now safely use `data` and `st.session_state.filtered_data` below
+    if data.empty:
+        st.warning("Dataset is empty or failed to load.")
+    else:
+        st.success("Dataset loaded successfully!")
+        # Proceed with app logic here using `data` or `st.session_state.filtered_data`
+
     
     # Initialize filtered_data in session state if it doesn't exist
     if "filtered_data" not in st.session_state or st.session_state.filtered_data is None:
