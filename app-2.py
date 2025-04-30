@@ -309,7 +309,7 @@ else:
             st.warning("Data could not be loaded. Please check your data source and try again.")
     else:
         # 📅 Tab 3: Claim Forecast with Prophet
-with tab3:
+        with tab3:
     st.header("Claim Forecast")
     st.markdown("<div class='section'>", unsafe_allow_html=True)
 
