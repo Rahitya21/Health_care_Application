@@ -237,17 +237,7 @@ else:
             st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # Create tabs
-        tab2, tab3, tab4, tab5, tab7, tab8 = st.tabs([
-        
-        "Key Metrics",
-        "Claim Forecast",
-        "Data Visualizations", 
-        "Resource Allocation", 
-        "Prediction Cost", 
-        "Data Export"
-    ])
-
+   
     # Sidebar Filters
 st.sidebar.header("Filter Data")
 
@@ -284,6 +274,18 @@ if not data.empty and "START_YEAR" in data.columns:
     st.session_state.filtered_data = filtered_data
 else:
     st.sidebar.warning("Data not loaded or missing required columns.")
+
+     # Create tabs
+        tab2, tab3, tab4, tab5, tab7, tab8 = st.tabs([
+        
+        "Key Metrics",
+        "Claim Forecast",
+        "Data Visualizations", 
+        "Resource Allocation", 
+        "Prediction Cost", 
+        "Data Export"
+    ])
+
 
     # Tab 2: Key Metrics
     with tab2:
