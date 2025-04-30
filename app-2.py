@@ -312,60 +312,64 @@ else:
     else:
         # 📅 Tab 3: Claim Forecast with Prophet
         with tab3:
-            st.header("Claim Forecast")
-            st.markdown("<div class='section'>", unsafe_allow_html=True)
-
-            try:
-                if "START" in data.columns and "TOTALCOST" in data.columns:
-                    # Prepare and clean data
-                    df = data.copy()
-                    df['START'] = pd.to_datetime(df['START'], errors='coerce').dt.tz_localize(None)
-                    df.dropna(subset=['START'], inplace=True)
-                    df.sort_values('START', inplace=True)
-
-                    df['START_MONTH'] = df['START'].dt.to_period('M').dt.to_timestamp()
-                    df['TOTALCOST'] = pd.to_numeric(df['TOTALCOST'], errors='coerce')
-
-                    monthly_cost = df.groupby('START_MONTH')['TOTALCOST'].sum()
-                    monthly_cost_clean = monthly_cost.dropna()
-                    monthly_cost_clean = monthly_cost_clean[~monthly_cost_clean.isin([np.inf, -np.inf])]
-
-                    if len(monthly_cost_clean) >= 24:  # Require at least 2 years of data for trend
-                        # Focus on last 3 years
-                        monthly_cost_recent = monthly_cost_clean[-36:]
-
-                        prophet_df = monthly_cost_recent.reset_index()
-                        prophet_df.columns = ['ds', 'y']
-
-                        model = Prophet()
-                        model.fit(prophet_df)
-
-                        future = model.make_future_dataframe(periods=60, freq='MS')
-                        forecast = model.predict(future)
-
-                        st.write("**Prophet Forecast for Monthly Claim Costs (Next 5 Years):**")
-                        st.dataframe(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail())
-
-                        # Plot forecast
-                        fig1 = model.plot(forecast)
-                        plt.title("5-Year Forecast of Monthly Claim Costs")
-                        plt.xlabel("Date")
-                        plt.ylabel("Total Cost ($)")
-                        plt.grid(True)
-                        st.pyplot(fig1)
-
-                        # Plot trend & seasonality
-                        st.subheader("Trend & Seasonality")
-                        fig2 = model.plot_components(forecast)
-                        st.pyplot(fig2)
-                    else:
-                        st.warning("At least 2 years of monthly data is required for Prophet forecast.")
-                else:
-                    st.warning("Columns 'START' and 'TOTALCOST' not found in the dataset.")
-            except Exception as e:
-                st.error(f"Error generating claim forecast with Prophet: {e}")
-
-            st.markdown("</div>", unsafe_allow_html=True)
+        st.header("Claim Forecast")
+        st.markdown("<div class='section'>", unsafe_allow_html=True)
+    
+        try:
+            if "START" in data.columns and "TOTALCOST" in data.columns:
+                # ✅ STEP 4: Prepare and clean the data
+                df = data.copy()
+                df['START'] = pd.to_datetime(df['START'], errors='coerce').dt.tz_localize(None)
+                df.dropna(subset=['START'], inplace=True)
+                df.sort_values('START', inplace=True)
+    
+                # Aggregate to monthly total claim cost
+                df['START_MONTH'] = df['START'].dt.to_period('M').dt.to_timestamp()
+                df['TOTALCOST'] = pd.to_numeric(df['TOTALCOST'], errors='coerce')
+                monthly_cost = df.groupby('START_MONTH')['TOTALCOST'].sum()
+                monthly_cost_clean = monthly_cost.dropna()
+                monthly_cost_clean = monthly_cost_clean[~monthly_cost_clean.isin([np.inf, -np.inf])]
+    
+                # Focus on the most recent 3 years (optional)
+                monthly_cost_recent = monthly_cost_clean[-36:]
+                if "2025-02-01" in monthly_cost_recent.index:
+                    monthly_cost_recent = monthly_cost_recent.drop("2025-02-01")
+    
+                # 📆 STEP 5: Format for Prophet
+                prophet_df = monthly_cost_recent.reset_index()
+                prophet_df.columns = ['ds', 'y']
+    
+                # 🔮 STEP 6: Fit Prophet Model
+                model = Prophet()
+                model.fit(prophet_df)
+    
+                # ⏩ STEP 7: Create Future DataFrame & Forecast
+                future = model.make_future_dataframe(periods=60, freq='MS')  # Next 5 years
+                forecast = model.predict(future)
+    
+                # 🖼️ STEP 8: Plot Forecast
+                st.write("**Prophet Forecast for Monthly Claim Costs (Next 5 Years):**")
+                st.dataframe(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail())
+    
+                fig1 = model.plot(forecast)
+                plt.title("5-Year Forecast of Monthly Claim Costs using Prophet")
+                plt.xlabel("Date")
+                plt.ylabel("Total Claim Cost")
+                plt.grid(True)
+                plt.tight_layout()
+                st.pyplot(fig1)
+    
+                # Trend and Seasonality
+                st.subheader("Trend & Seasonality")
+                fig2 = model.plot_components(forecast)
+                st.pyplot(fig2)
+    
+            else:
+                st.warning("Columns 'START' and 'TOTALCOST' not found in the dataset.")
+        except Exception as e:
+            st.error(f"Error generating claim forecast with Prophet: {e}")
+    
+        st.markdown("</div>", unsafe_allow_html=True)
 
         # Tab 4: Data Visualizations
         with tab4:
