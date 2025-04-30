@@ -276,7 +276,7 @@ else:
     st.sidebar.warning("Data not loaded or missing required columns.")
 
      # Create tabs
-        tab2, tab3, tab4, tab5, tab7, tab8 = st.tabs([
+tab2, tab3, tab4, tab5, tab7, tab8 = st.tabs([
         
         "Key Metrics",
         "Claim Forecast",
