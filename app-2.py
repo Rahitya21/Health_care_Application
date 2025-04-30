@@ -432,11 +432,11 @@ else:
 
 
     # Tab 5: Resource Allocation
-if data.empty:
-with tab5:
-    st.warning("Data could not be loaded. Please check your data source and try again.")
-else:
-        with tab5:
+ if data.empty:
+            with tab5:
+                st.warning("Data could not be loaded. Please check your data source and try again.")
+    else:
+       with tab5:
             st.header("Resource Allocation")
             st.markdown("<div class='section'>", unsafe_allow_html=True)
             
