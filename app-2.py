@@ -397,30 +397,29 @@ with tab2:
     
         st.markdown("</div>", unsafe_allow_html=True)
      # Tab 4: Data Visualizations
-   with tab4:
-        st.header("Data Visualizations")
-        st.markdown("<div class='section'>", unsafe_allow_html=True)
-    
-        import plotly.express as px
-    
-        # ✅ Use filtered data if available
-        if "filtered_data" in st.session_state and not st.session_state.filtered_data.empty:
-            df = st.session_state.filtered_data.copy()
-    
-            try:
-                st.subheader("Total Cost Distribution")
-                fig_cost_dist = px.histogram(df, x="TOTALCOST", nbins=20, 
-                                             labels={"TOTALCOST": "Total Cost ($)"}, 
-                                             color_discrete_sequence=["#636EFA"])
-                fig_cost_dist.update_layout(bargap=0.1, showlegend=False)
-                st.plotly_chart(fig_cost_dist, use_container_width=True)
-            except Exception as e:
-                st.error(f"Error creating Total Cost Distribution chart: {e}")
-        else:
-            st.warning("No filtered data available. Please apply filters in the sidebar.")
-    
-        st.markdown("</div>", unsafe_allow_html=True)
+  with tab4:
+    st.header("Data Visualizations")
+    st.markdown("<div class='section'>", unsafe_allow_html=True)
 
+    import plotly.express as px
+
+    # ✅ Use filtered data if available
+    if "filtered_data" in st.session_state and not st.session_state.filtered_data.empty:
+        df = st.session_state.filtered_data.copy()
+
+        try:
+            st.subheader("Total Cost Distribution")
+            fig_cost_dist = px.histogram(df, x="TOTALCOST", nbins=20, 
+                                         labels={"TOTALCOST": "Total Cost ($)"}, 
+                                         color_discrete_sequence=["#636EFA"])
+            fig_cost_dist.update_layout(bargap=0.1, showlegend=False)
+            st.plotly_chart(fig_cost_dist, use_container_width=True)
+        except Exception as e:
+            st.error(f"Error creating Total Cost Distribution chart: {e}")
+    else:
+        st.warning("No filtered data available. Please apply filters in the sidebar.")
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
     # Tab 5: Resource Allocation
     with tab5:
