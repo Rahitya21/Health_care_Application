@@ -374,8 +374,6 @@ else:
                     st.subheader("Interactive Forecast Plot (Next 5 Years)")
                     fig_plotly = px.line(forecast, x='ds', y='yhat', labels={'ds': 'Date', 'yhat': 'Predicted Claim Cost'},
                                          title='Forecast of Monthly Claim Costs')
-                    fig_plotly.add_scatter(x=forecast['ds'], y=forecast['yhat_upper'], mode='lines', name='Upper Bound')
-                    fig_plotly.add_scatter(x=forecast['ds'], y=forecast['yhat_lower'], mode='lines', name='Lower Bound')
                     st.plotly_chart(fig_plotly, use_container_width=True)
         
                     # Forecast Table
