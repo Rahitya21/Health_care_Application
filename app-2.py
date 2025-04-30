@@ -354,53 +354,53 @@ if data.empty:
         st.warning("Data could not be loaded. Please check your data source and try again.")
 else:
    # 📅 Tab 3: Claim Forecast with Prophet (Interactive + Filters)
-with tab3:
-    st.header("Claim Forecast")
-    st.markdown("<div class='section'>", unsafe_allow_html=True)
-
-    # ✅ Check for valid filtered data
-    if "filtered_data" in st.session_state and not st.session_state.filtered_data.empty:
-        df = st.session_state.filtered_data.copy()
-
-        try:
-            if "START" in df.columns and "TOTALCOST" in df.columns:
-                df['START'] = pd.to_datetime(df['START'], errors='coerce').dt.tz_localize(None)
-                df.dropna(subset=['START'], inplace=True)
-                df.sort_values('START', inplace=True)
-
-                df = df[df['TOTALCOST'] >= 0]
-                df['START_MONTH'] = df['START'].dt.to_period('M').dt.to_timestamp()
-                df['TOTALCOST'] = pd.to_numeric(df['TOTALCOST'], errors='coerce')
-
-                monthly_cost = df.groupby('START_MONTH')['TOTALCOST'].sum()
-                monthly_cost_clean = monthly_cost.dropna()
-                monthly_cost_clean = monthly_cost_clean[~monthly_cost_clean.isin([np.inf, -np.inf])]
-                monthly_cost_recent = monthly_cost_clean[-36:]
-
-                prophet_df = monthly_cost_recent.reset_index()
-                prophet_df.columns = ['ds', 'y']
-
-                model = Prophet(changepoint_prior_scale=0.05)
-                model.fit(prophet_df)
-                future = model.make_future_dataframe(periods=60, freq='MS')
-                forecast = model.predict(future)
-
-                st.subheader("Interactive Forecast Plot (Next 5 Years)")
-                fig_plotly = px.line(forecast, x='ds', y='yhat',
-                                     labels={'ds': 'Date', 'yhat': 'Predicted Claim Cost'},
-                                     title='Forecast of Monthly Claim Costs')
-                st.plotly_chart(fig_plotly, use_container_width=True)
-
-                st.write("Forecast Table (Tail):")
-                st.dataframe(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail())
-            else:
-                st.warning("Columns 'START' and 'TOTALCOST' not found in the dataset.")
-        except Exception as e:
-            st.error(f"Error generating claim forecast with Prophet: {e}")
-    else:
-        st.warning("No filtered data available. Please apply filters in the sidebar or ensure data is loaded.")
-
-    st.markdown("</div>", unsafe_allow_html=True)
+    with tab3:
+        st.header("Claim Forecast")
+        st.markdown("<div class='section'>", unsafe_allow_html=True)
+    
+        # ✅ Check for valid filtered data
+        if "filtered_data" in st.session_state and not st.session_state.filtered_data.empty:
+            df = st.session_state.filtered_data.copy()
+    
+            try:
+                if "START" in df.columns and "TOTALCOST" in df.columns:
+                    df['START'] = pd.to_datetime(df['START'], errors='coerce').dt.tz_localize(None)
+                    df.dropna(subset=['START'], inplace=True)
+                    df.sort_values('START', inplace=True)
+    
+                    df = df[df['TOTALCOST'] >= 0]
+                    df['START_MONTH'] = df['START'].dt.to_period('M').dt.to_timestamp()
+                    df['TOTALCOST'] = pd.to_numeric(df['TOTALCOST'], errors='coerce')
+    
+                    monthly_cost = df.groupby('START_MONTH')['TOTALCOST'].sum()
+                    monthly_cost_clean = monthly_cost.dropna()
+                    monthly_cost_clean = monthly_cost_clean[~monthly_cost_clean.isin([np.inf, -np.inf])]
+                    monthly_cost_recent = monthly_cost_clean[-36:]
+    
+                    prophet_df = monthly_cost_recent.reset_index()
+                    prophet_df.columns = ['ds', 'y']
+    
+                    model = Prophet(changepoint_prior_scale=0.05)
+                    model.fit(prophet_df)
+                    future = model.make_future_dataframe(periods=60, freq='MS')
+                    forecast = model.predict(future)
+    
+                    st.subheader("Interactive Forecast Plot (Next 5 Years)")
+                    fig_plotly = px.line(forecast, x='ds', y='yhat',
+                                         labels={'ds': 'Date', 'yhat': 'Predicted Claim Cost'},
+                                         title='Forecast of Monthly Claim Costs')
+                    st.plotly_chart(fig_plotly, use_container_width=True)
+    
+                    st.write("Forecast Table (Tail):")
+                    st.dataframe(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail())
+                else:
+                    st.warning("Columns 'START' and 'TOTALCOST' not found in the dataset.")
+            except Exception as e:
+                st.error(f"Error generating claim forecast with Prophet: {e}")
+        else:
+            st.warning("No filtered data available. Please apply filters in the sidebar or ensure data is loaded.")
+    
+        st.markdown("</div>", unsafe_allow_html=True)
      # Tab 4: Data Visualizations
        with tab4:
     st.header("Data Visualizations")
