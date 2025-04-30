@@ -310,63 +310,75 @@ else:
         with tab3, tab4, tab5, tab7, tab8:
             st.warning("Data could not be loaded. Please check your data source and try again.")
     else:
-        # 📅 Tab 3: Claim Forecast with Prophet
+        # 📅 Tab 3: Claim Forecast with Prophet (Interactive + Filters)
         with tab3:
             st.header("Claim Forecast")
             st.markdown("<div class='section'>", unsafe_allow_html=True)
         
             try:
-                if "START" in data.columns and "TOTALCOST" in data.columns:
-                    # ✅ STEP 4: Prepare and clean the data
-                    df = data.copy()
+                # 🧽 Filters Section
+                st.subheader("Apply Filters")
+                age_filter = st.multiselect("Select Age(s):", options=sorted(data['AGE'].dropna().unique()), default=None)
+                gender_filter = st.multiselect("Select Gender(s):", options=data['GENDER'].dropna().unique(), default=None)
+                race_filter = st.multiselect("Select Race(s):", options=data['RACE'].dropna().unique(), default=None)
+                ethnicity_filter = st.multiselect("Select Ethnicity:", options=data['ETHNICITY'].dropna().unique(), default=None)
+                encounter_filter = st.multiselect("Select Encounter Type:", options=data['ENCOUNTERCLASS'].dropna().unique(), default=None)
+        
+                df = data.copy()
+        
+                # Apply Filters
+                if age_filter:
+                    df = df[df['AGE'].isin(age_filter)]
+                if gender_filter:
+                    df = df[df['GENDER'].isin(gender_filter)]
+                if race_filter:
+                    df = df[df['RACE'].isin(race_filter)]
+                if ethnicity_filter:
+                    df = df[df['ETHNICITY'].isin(ethnicity_filter)]
+                if encounter_filter:
+                    df = df[df['ENCOUNTERCLASS'].isin(encounter_filter)]
+        
+                if "START" in df.columns and "TOTALCOST" in df.columns:
+                    # STEP 4: Prepare data
                     df['START'] = pd.to_datetime(df['START'], errors='coerce').dt.tz_localize(None)
                     df.dropna(subset=['START'], inplace=True)
                     df.sort_values('START', inplace=True)
         
-                    # Aggregate to monthly total claim cost
                     df['START_MONTH'] = df['START'].dt.to_period('M').dt.to_timestamp()
                     df['TOTALCOST'] = pd.to_numeric(df['TOTALCOST'], errors='coerce')
                     monthly_cost = df.groupby('START_MONTH')['TOTALCOST'].sum()
                     monthly_cost_clean = monthly_cost.dropna()
                     monthly_cost_clean = monthly_cost_clean[~monthly_cost_clean.isin([np.inf, -np.inf])]
-        
-                    # Focus on the most recent 3 years (optional)
                     monthly_cost_recent = monthly_cost_clean[-36:]
-                    if "2025-02-01" in monthly_cost_recent.index:
-                        monthly_cost_recent = monthly_cost_recent.drop("2025-02-01")
         
-                    # 📆 STEP 5: Format for Prophet
                     prophet_df = monthly_cost_recent.reset_index()
                     prophet_df.columns = ['ds', 'y']
         
-                    # 🔮 STEP 6: Fit Prophet Model
+                    # Prophet Forecast
                     model = Prophet()
                     model.fit(prophet_df)
-        
-                    # ⏩ STEP 7: Create Future DataFrame & Forecast
-                    future = model.make_future_dataframe(periods=60, freq='MS')  # Next 5 years
+                    future = model.make_future_dataframe(periods=60, freq='MS')
                     forecast = model.predict(future)
         
-                    # 🖼️ STEP 8: Plot Forecast
-                    st.write("**Prophet Forecast for Monthly Claim Costs (Next 5 Years):**")
+                    # Plotly Interactive Plot
+                    st.subheader("Interactive Forecast Plot (Next 5 Years)")
+                    fig_plotly = px.line(forecast, x='ds', y='yhat', labels={'ds': 'Date', 'yhat': 'Predicted Claim Cost'},
+                                         title='Forecast of Monthly Claim Costs')
+                    fig_plotly.add_scatter(x=forecast['ds'], y=forecast['yhat_upper'], mode='lines', name='Upper Bound')
+                    fig_plotly.add_scatter(x=forecast['ds'], y=forecast['yhat_lower'], mode='lines', name='Lower Bound')
+                    st.plotly_chart(fig_plotly, use_container_width=True)
+        
+                    # Forecast Table
+                    st.write("Forecast Table (Tail):")
                     st.dataframe(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail())
         
-                    fig1 = model.plot(forecast)
-                    plt.title("5-Year Forecast of Monthly Claim Costs using Prophet")
-                    plt.xlabel("Date")
-                    plt.ylabel("Total Claim Cost")
-                    plt.grid(True)
-                    plt.tight_layout()
-                    st.pyplot(fig1)
-        
-                    
                 else:
                     st.warning("Columns 'START' and 'TOTALCOST' not found in the dataset.")
             except Exception as e:
                 st.error(f"Error generating claim forecast with Prophet: {e}")
         
             st.markdown("</div>", unsafe_allow_html=True)
-
+        
         # Tab 4: Data Visualizations
         with tab4:
             st.header("Data Visualizations")
