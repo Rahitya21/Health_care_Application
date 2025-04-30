@@ -433,104 +433,105 @@ else:
 
     # Tab 5: Resource Allocation
  if data.empty:
-        with tab5:
-             st.warning("Data could not be loaded. Please check your data source and try again.")
+    with tab5:
+        st.warning("Data could not be loaded. Please check your data source and try again.")
 else:
-     with tab5:
+    with tab5:
         st.header("Resource Allocation")
         st.markdown("<div class='section'>", unsafe_allow_html=True)
-        
+
         import plotly.express as px
         if "filtered_data" in st.session_state and not st.session_state.filtered_data.empty:
-    df = st.session_state.filtered_data.copy()
-        
-        try:
-            st.subheader("Age Group vs Average Total Cost")
-            # Create age bins for grouping
-            bins = [0, 18, 30, 40, 50, 60, 100]
-            labels = ['0-18', '19-30', '31-40', '41-50', '51-60', '60+']
-            data['Age Group'] = pd.cut(data['AGE'], bins=bins, labels=labels, right=False)
+            df = st.session_state.filtered_data.copy()  # Corrected indentation here
 
-            # Calculate average total cost per age group
-            age_group_avg_cost = data.groupby('Age Group')['TOTALCOST'].mean().reset_index()
+            try:
+                st.subheader("Age Group vs Average Total Cost")
+                # Create age bins for grouping
+                bins = [0, 18, 30, 40, 50, 60, 100]
+                labels = ['0-18', '19-30', '31-40', '41-50', '51-60', '60+']
+                data['Age Group'] = pd.cut(data['AGE'], bins=bins, labels=labels, right=False)
 
-            # Create bar chart using Plotly
-            fig_age_group_avg_cost = px.bar(age_group_avg_cost, x="Age Group", y="TOTALCOST",
-                                        labels={"Age Group": "Age Group", "TOTALCOST": "Average Total Cost ($)"},
-                                        color="Age Group",
-                                        color_discrete_sequence=["#636EFA"])
-            fig_age_group_avg_cost.update_layout(showlegend=False)
-            st.plotly_chart(fig_age_group_avg_cost, use_container_width=True)
-        except Exception as e:
-            st.error(f"Error creating Age Group vs Average Total Cost chart: {e}")
+                # Calculate average total cost per age group
+                age_group_avg_cost = data.groupby('Age Group')['TOTALCOST'].mean().reset_index()
 
-        try:
-            st.subheader("Average Claim Cost by Race")
-            avg_cost_by_race = st.session_state.filtered_data.groupby("RACE")["TOTALCOST"].mean().reset_index()
-            if not avg_cost_by_race.empty:
-                fig_regional_avg = px.bar(
-                    avg_cost_by_race, x="RACE", y="TOTALCOST",
-                    title="Average Claim Cost by Race",
-                    labels={"RACE": "Race", "TOTALCOST": "Average Cost ($)"},
-                    color_discrete_sequence=["#636EFA"]
-                )
-                fig_regional_avg.update_layout(showlegend=False)
-                st.plotly_chart(fig_regional_avg, use_container_width=True)
-            else:
-                st.info("No data available for the selected filters.")
-        except Exception as e:
-            st.error(f"Error generating average cost by race visualization: {e}")
-
-        try:
-            st.subheader("Average Claim Cost by Encounter Class")
-            # Average Claim Cost by Encounter Class
-            avg_cost_by_encounter = st.session_state.filtered_data.groupby("ENCOUNTERCLASS")["TOTALCOST"].mean().reset_index()
-            if not avg_cost_by_encounter.empty:
                 # Create bar chart using Plotly
-                fig_avg_cost_by_encounter = px.bar(avg_cost_by_encounter, x="ENCOUNTERCLASS", y="TOTALCOST",
-                                               labels={"ENCOUNTERCLASS": "Encounter Class", "TOTALCOST": "Average Claim Cost ($)"},
-                                               color="ENCOUNTERCLASS",
-                                               color_discrete_sequence=["#636EFA"])
-                fig_avg_cost_by_encounter.update_layout(showlegend=False)
-                st.plotly_chart(fig_avg_cost_by_encounter, use_container_width=True)
-        except Exception as e:
-            st.error(f"Error analyzing resource allocation: {e}")
+                fig_age_group_avg_cost = px.bar(age_group_avg_cost, x="Age Group", y="TOTALCOST",
+                                                labels={"Age Group": "Age Group", "TOTALCOST": "Average Total Cost ($)"},
+                                                color="Age Group",
+                                                color_discrete_sequence=["#636EFA"])
+                fig_age_group_avg_cost.update_layout(showlegend=False)
+                st.plotly_chart(fig_age_group_avg_cost, use_container_width=True)
+            except Exception as e:
+                st.error(f"Error creating Age Group vs Average Total Cost chart: {e}")
 
-        try:
-            st.subheader("Average Claim Cost by Gender")
-            avg_cost_by_gender = st.session_state.filtered_data.groupby("GENDER")["TOTALCOST"].mean().reset_index()
-            if not avg_cost_by_gender.empty:
-                fig_gender_avg = px.bar(
-                    avg_cost_by_gender, x="GENDER", y="TOTALCOST",
-                    title="Average Claim Cost by Gender",
-                    labels={"GENDER": "Gender", "TOTALCOST": "Average Cost ($)"},
-                    color_discrete_sequence=["#636EFA"]
-                )
-                fig_gender_avg.update_layout(showlegend=False)
-                st.plotly_chart(fig_gender_avg, use_container_width=True)
-            else:
-                st.info("No data available for the selected filters.")
-        except Exception as e:
-            st.error(f"Error generating average cost by gender visualization: {e}")
+            try:
+                st.subheader("Average Claim Cost by Race")
+                avg_cost_by_race = st.session_state.filtered_data.groupby("RACE")["TOTALCOST"].mean().reset_index()
+                if not avg_cost_by_race.empty:
+                    fig_regional_avg = px.bar(
+                        avg_cost_by_race, x="RACE", y="TOTALCOST",
+                        title="Average Claim Cost by Race",
+                        labels={"RACE": "Race", "TOTALCOST": "Average Cost ($)"},
+                        color_discrete_sequence=["#636EFA"]
+                    )
+                    fig_regional_avg.update_layout(showlegend=False)
+                    st.plotly_chart(fig_regional_avg, use_container_width=True)
+                else:
+                    st.info("No data available for the selected filters.")
+            except Exception as e:
+                st.error(f"Error generating average cost by race visualization: {e}")
 
-        try:
-            st.subheader("Average Claim Cost by Ethnicity")
-            avg_cost_by_ethnicity = st.session_state.filtered_data.groupby("ETHNICITY")["TOTALCOST"].mean().reset_index()
-            if not avg_cost_by_ethnicity.empty:
-                fig_ethnicity_avg = px.bar(
-                    avg_cost_by_ethnicity, x="ETHNICITY", y="TOTALCOST",
-                    title="Average Claim Cost by Ethnicity",
-                    labels={"ETHNICITY": "Ethnicity", "TOTALCOST": "Average Cost ($)"},
-                    color_discrete_sequence=["#636EFA"]
-                )
-                fig_ethnicity_avg.update_layout(showlegend=False)
-                st.plotly_chart(fig_ethnicity_avg, use_container_width=True)
-            else:
-                st.info("No data available for the selected filters.")
-        except Exception as e:
-            st.error(f"Error generating average cost by ethnicity visualization: {e}")
+            try:
+                st.subheader("Average Claim Cost by Encounter Class")
+                # Average Claim Cost by Encounter Class
+                avg_cost_by_encounter = st.session_state.filtered_data.groupby("ENCOUNTERCLASS")["TOTALCOST"].mean().reset_index()
+                if not avg_cost_by_encounter.empty:
+                    # Create bar chart using Plotly
+                    fig_avg_cost_by_encounter = px.bar(avg_cost_by_encounter, x="ENCOUNTERCLASS", y="TOTALCOST",
+                                                       labels={"ENCOUNTERCLASS": "Encounter Class", "TOTALCOST": "Average Claim Cost ($)"},
+                                                       color="ENCOUNTERCLASS",
+                                                       color_discrete_sequence=["#636EFA"])
+                    fig_avg_cost_by_encounter.update_layout(showlegend=False)
+                    st.plotly_chart(fig_avg_cost_by_encounter, use_container_width=True)
+            except Exception as e:
+                st.error(f"Error analyzing resource allocation: {e}")
 
-        st.markdown("</div>", unsafe_allow_html=True)
+            try:
+                st.subheader("Average Claim Cost by Gender")
+                avg_cost_by_gender = st.session_state.filtered_data.groupby("GENDER")["TOTALCOST"].mean().reset_index()
+                if not avg_cost_by_gender.empty:
+                    fig_gender_avg = px.bar(
+                        avg_cost_by_gender, x="GENDER", y="TOTALCOST",
+                        title="Average Claim Cost by Gender",
+                        labels={"GENDER": "Gender", "TOTALCOST": "Average Cost ($)"},
+                        color_discrete_sequence=["#636EFA"]
+                    )
+                    fig_gender_avg.update_layout(showlegend=False)
+                    st.plotly_chart(fig_gender_avg, use_container_width=True)
+                else:
+                    st.info("No data available for the selected filters.")
+            except Exception as e:
+                st.error(f"Error generating average cost by gender visualization: {e}")
+
+            try:
+                st.subheader("Average Claim Cost by Ethnicity")
+                avg_cost_by_ethnicity = st.session_state.filtered_data.groupby("ETHNICITY")["TOTALCOST"].mean().reset_index()
+                if not avg_cost_by_ethnicity.empty:
+                    fig_ethnicity_avg = px.bar(
+                        avg_cost_by_ethnicity, x="ETHNICITY", y="TOTALCOST",
+                        title="Average Claim Cost by Ethnicity",
+                        labels={"ETHNICITY": "Ethnicity", "TOTALCOST": "Average Cost ($)"},
+                        color_discrete_sequence=["#636EFA"]
+                    )
+                    fig_ethnicity_avg.update_layout(showlegend=False)
+                    st.plotly_chart(fig_ethnicity_avg, use_container_width=True)
+                else:
+                    st.info("No data available for the selected filters.")
+            except Exception as e:
+                st.error(f"Error generating average cost by ethnicity visualization: {e}")
+
+            st.markdown("</div>", unsafe_allow_html=True)
+
 
         # Tab 7: Prediction Cost
 if data.empty:
