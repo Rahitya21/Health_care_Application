@@ -238,7 +238,7 @@ else:
         st.markdown("</div>", unsafe_allow_html=True)
 
     # Create tabs
-     tab2, tab3, tab4, tab5, tab7, tab8 = st.tabs([
+        tab2, tab3, tab4, tab5, tab7, tab8 = st.tabs([
         
         "Key Metrics",
         "Claim Forecast",
