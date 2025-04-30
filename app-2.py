@@ -350,7 +350,7 @@ with tab2:
 
     # Only show the rest of the tabs if we have valid data
 if data.empty:
-    with tab3, tab4, tab5, tab7, tab8:
+    with tab3:
         st.warning("Data could not be loaded. Please check your data source and try again.")
 else:
    # 📅 Tab 3: Claim Forecast with Prophet (Interactive + Filters)
@@ -402,6 +402,10 @@ else:
     
         st.markdown("</div>", unsafe_allow_html=True)
      # Tab 4: Data Visualizations
+    if data.empty:
+    with tab4:
+        st.warning("Data could not be loaded. Please check your data source and try again.")
+else:
        with tab4:
             st.header("Data Visualizations")
             st.markdown("<div class='section'>", unsafe_allow_html=True)
@@ -428,6 +432,10 @@ else:
 
 
         # Tab 5: Resource Allocation
+    if data.empty:
+    with tab3:
+        st.warning("Data could not be loaded. Please check your data source and try again.")
+else:
         with tab5:
             st.header("Resource Allocation")
             st.markdown("<div class='section'>", unsafe_allow_html=True)
@@ -525,6 +533,10 @@ else:
             st.markdown("</div>", unsafe_allow_html=True)
 
         # Tab 7: Prediction Cost
+if data.empty:
+    with tab3:
+        st.warning("Data could not be loaded. Please check your data source and try again.")
+else:
         with tab7:
             st.header("Prediction Cost")
             st.markdown("<div class='section'>", unsafe_allow_html=True)
