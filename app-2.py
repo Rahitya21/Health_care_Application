@@ -164,6 +164,25 @@ else:
                                 data[col] = 0
 
                     data = data.fillna(0)
+                    # Convert AGE into age groups
+                    def categorize_age(age):
+                        if age < 18:
+                            return "0-17"
+                        elif 18 <= age <= 24:
+                            return "18-24"
+                        elif 25 <= age <= 34:
+                            return "25-34"
+                        elif 35 <= age <= 44:
+                            return "35-44"
+                        elif 45 <= age <= 54:
+                            return "45-54"
+                        elif 55 <= age <= 64:
+                            return "55-64"
+                        else:
+                            return "65+"
+                    
+                    data["AGE_GROUP"] = data["AGE"].apply(categorize_age)
+
 
                     # Extract year for filtering and forecasting
                     if "START" in data.columns:
@@ -177,14 +196,14 @@ else:
 
                     # Prepare features for one-hot encoding
                     features = [
-                        "AGE", "GENDER", "RACE", "ETHNICITY", "INCOME", "ENCOUNTERCLASS", "CODE", "ENCOUNTER_DURATION",
+                       "AGE_GROUP", "GENDER", "RACE", "ETHNICITY", "INCOME", "ENCOUNTERCLASS", "CODE", "ENCOUNTER_DURATION",
                         "PAYER_COVERAGE", "BASE_ENCOUNTER_COST", "AVG_CLAIM_COST", "STATE",
                         "NUM_DIAG1", "HEALTHCARE_EXPENSES", "NUM_ENCOUNTERS", "NUM_DIAG2"
                     ]
                     X = data[features]
 
                     # Define categorical columns
-                    categorical_cols = ["GENDER", "RACE", "ETHNICITY", "ENCOUNTERCLASS", "CODE", "STATE"]
+                    categorical_cols = ["AGE_GROUP","GENDER", "RACE", "ETHNICITY", "ENCOUNTERCLASS", "CODE", "STATE"]
 
                     # Convert categorical columns to string
                     for col in categorical_cols:
@@ -219,8 +238,8 @@ else:
         st.markdown("</div>", unsafe_allow_html=True)
 
     # Create tabs
-    tab1, tab2, tab3, tab4, tab5, tab7, tab8 = st.tabs([
-        "Data Filters", 
+     tab2, tab3, tab4, tab5, tab7, tab8 = st.tabs([
+        
         "Key Metrics",
         "Claim Forecast",
         "Data Visualizations", 
@@ -229,40 +248,42 @@ else:
         "Data Export"
     ])
 
-    # Tab 1: Data Filters
-    with tab1:
-        st.header("Data Filters")
-        st.markdown("<div class='section'>", unsafe_allow_html=True)
+    # Sidebar Filters
+st.sidebar.header("Filter Data")
 
-        # Safety check to make sure we have data
-        if not data.empty and "START_YEAR" in data.columns:
-            years = sorted(list(data["START_YEAR"].unique()))
-            if len(years) > 0:
-                start_year = st.selectbox("Start Year:", years, index=0)
-                end_year = st.selectbox("End Year:", years, index=len(years)-1)
+if not data.empty and "START_YEAR" in data.columns:
+    years = sorted(list(data["START_YEAR"].unique()))
+    start_year = st.sidebar.selectbox("Start Year", years, index=0)
+    end_year = st.sidebar.selectbox("End Year", years, index=len(years)-1)
 
-                if st.button("Apply Year Range"):
-                    try:
-                        filtered_data = data[(data["START_YEAR"] >= start_year) & (data["START_YEAR"] <= end_year)]
-                        st.session_state.filtered_data = filtered_data
-                        st.write(f"Filtered Data: {len(filtered_data)} records")
-                    except Exception as e:
-                        st.error(f"Error applying year range filter: {e}")
-            else:
-                st.warning("No year data available.")
-        else:
-            st.warning("Data not properly loaded or missing START_YEAR column.")
+    # Single-select dropdowns
+    age_group_options = sorted(data["AGE_GROUP"].dropna().unique())
+    gender_options = sorted(data["GENDER"].dropna().unique())
+    race_options = sorted(data["RACE"].dropna().unique())
+    ethnicity_options = sorted(data["ETHNICITY"].dropna().unique())
+    encounter_class_options = sorted(data["ENCOUNTERCLASS"].dropna().unique())
 
-        # Only try to display filtered data if it exists
-        try:
-            if st.session_state.filtered_data is not None and not st.session_state.filtered_data.empty:
-                st.write(f"Filtered Data: {len(st.session_state.filtered_data)} records")
-            else:
-                st.warning("No filtered data available.")
-        except Exception as e:
-            st.error(f"Error displaying filtered data: {e}")
+    selected_age_group = st.sidebar.selectbox("Age Group", age_group_options)
+    selected_gender = st.sidebar.selectbox("Gender", gender_options)
+    selected_race = st.sidebar.selectbox("Race", race_options)
+    selected_ethnicity = st.sidebar.selectbox("Ethnicity", ethnicity_options)
+    selected_encounter = st.sidebar.selectbox("Encounter Class", encounter_class_options)
 
-        st.markdown("</div>", unsafe_allow_html=True)
+    # Apply filters
+    filtered_data = data[
+        (data["START_YEAR"] >= start_year) &
+        (data["START_YEAR"] <= end_year) &
+        (data["AGE_GROUP"] == selected_age_group) &
+        (data["GENDER"] == selected_gender) &
+        (data["RACE"] == selected_race) &
+        (data["ETHNICITY"] == selected_ethnicity) &
+        (data["ENCOUNTERCLASS"] == selected_encounter)
+    ]
+
+    # Save to session state
+    st.session_state.filtered_data = filtered_data
+else:
+    st.sidebar.warning("Data not loaded or missing required columns."))
 
     # Tab 2: Key Metrics
     with tab2:
@@ -340,10 +361,7 @@ else:
                 if encounter_filter:
                     df = df[df['ENCOUNTERCLASS'].isin(encounter_filter)]
         
-                # Display filtered data preview
-                st.write(f"Filtered dataset size: {df.shape[0]}")
-                st.write("Filtered Data Preview (Before Forecasting):")
-                st.dataframe(df[['START', 'TOTALCOST', 'AGE', 'GENDER', 'RACE', 'ETHNICITY', 'ENCOUNTERCLASS']].head())
+              
         
                 if "START" in df.columns and "TOTALCOST" in df.columns:
                     # STEP 4: Prepare data
