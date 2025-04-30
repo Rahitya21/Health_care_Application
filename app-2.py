@@ -196,10 +196,11 @@ else:
 
                     # Prepare features for one-hot encoding
                     features = [
-                       "AGE_GROUP", "GENDER", "RACE", "ETHNICITY", "INCOME", "ENCOUNTERCLASS", "CODE", "ENCOUNTER_DURATION",
-                        "PAYER_COVERAGE", "BASE_ENCOUNTER_COST", "AVG_CLAIM_COST", "STATE",
-                        "NUM_DIAG1", "HEALTHCARE_EXPENSES", "NUM_ENCOUNTERS", "NUM_DIAG2"
-                    ]
+   "AGE_GROUP", "GENDER", "RACE", "ETHNICITY", "INCOME", "ENCOUNTERCLASS", "CODE", "ENCOUNTER_DURATION",
+   "PAYER_COVERAGE", "BASE_ENCOUNTER_COST", "AVG_CLAIM_COST", "STATE",
+   "NUM_DIAG1", "HEALTHCARE_EXPENSES", "NUM_ENCOUNTERS", "NUM_DIAG2", "HEALTHCARE_COVERAGE"
+]
+
                     X = data[features]
 
                     # Define categorical columns
