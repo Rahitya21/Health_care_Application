@@ -7,3 +7,5 @@ xlsxwriter
 fpdf
 plotly
 xgboost
+prophet
+matplotlib
