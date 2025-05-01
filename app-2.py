@@ -257,38 +257,44 @@ else:
 
     # Sidebar Filters
     st.sidebar.header("Filter Data")
-
+    
     if not data.empty and "START_YEAR" in data.columns:
         years = sorted(list(data["START_YEAR"].unique()))
         start_year = st.sidebar.selectbox("Start Year", years, index=0)
         end_year = st.sidebar.selectbox("End Year", years, index=len(years)-1)
-
-        
-        # Single-select dropdowns
+    
+        # Helper to auto-select all if none selected
+        def multiselect_with_select_all(label, options):
+            select_all = st.sidebar.checkbox(f"Select All {label}", value=True)
+            if select_all:
+                return st.sidebar.multiselect(label, options, default=options)
+            else:
+                return st.sidebar.multiselect(label, options)
+    
+        # Flexible multi-select filters
         age_group_options = sorted(data["AGE_GROUP"].dropna().unique())
         gender_options = sorted(data["GENDER"].dropna().unique())
         race_options = sorted(data["RACE"].dropna().unique())
         ethnicity_options = sorted(data["ETHNICITY"].dropna().unique())
         encounter_class_options = sorted(data["ENCOUNTERCLASS"].dropna().unique())
     
-        selected_age_group = st.sidebar.selectbox("Age Group", age_group_options)
-        selected_gender = st.sidebar.selectbox("Gender", gender_options)
-        selected_race = st.sidebar.selectbox("Race", race_options)
-        selected_ethnicity = st.sidebar.selectbox("Ethnicity", ethnicity_options)
-        selected_encounter = st.sidebar.selectbox("Encounter Class", encounter_class_options)
+        selected_age_groups = multiselect_with_select_all("Age Group", age_group_options)
+        selected_genders = multiselect_with_select_all("Gender", gender_options)
+        selected_races = multiselect_with_select_all("Race", race_options)
+        selected_ethnicities = multiselect_with_select_all("Ethnicity", ethnicity_options)
+        selected_encounters = multiselect_with_select_all("Encounter Class", encounter_class_options)
     
-        # Apply filters
+        # Apply filters with isin() for lists
         filtered_data = data[
             (data["START_YEAR"] >= start_year) &
             (data["START_YEAR"] <= end_year) &
-            (data["AGE_GROUP"] == selected_age_group) &
-            (data["GENDER"] == selected_gender) &
-            (data["RACE"] == selected_race) &
-            (data["ETHNICITY"] == selected_ethnicity) &
-            (data["ENCOUNTERCLASS"] == selected_encounter)
+            (data["AGE_GROUP"].isin(selected_age_groups)) &
+            (data["GENDER"].isin(selected_genders)) &
+            (data["RACE"].isin(selected_races)) &
+            (data["ETHNICITY"].isin(selected_ethnicities)) &
+            (data["ENCOUNTERCLASS"].isin(selected_encounters))
         ]
     
-        # Save to session state
         st.session_state.filtered_data = filtered_data
     else:
         st.sidebar.warning("Data not loaded or missing required columns.")
