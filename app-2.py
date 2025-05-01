@@ -255,36 +255,35 @@ else:
             st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # Sidebar Filters
-    st.sidebar.header("Filter Data")
-    
-    if not data.empty and "START_YEAR" in data.columns:
-        years = sorted(list(data["START_YEAR"].unique()))
-        start_year = st.sidebar.selectbox("Start Year", years, index=0)
-        end_year = st.sidebar.selectbox("End Year", years, index=len(years)-1)
-    
-        # Helper to auto-select all if none selected
-        def multiselect_with_select_all(label, options):
-            select_all = st.sidebar.checkbox(f"Select All {label}", value=True)
-            if select_all:
-                return st.sidebar.multiselect(label, options, default=options)
-            else:
-                return st.sidebar.multiselect(label, options)
-    
-        # Flexible multi-select filters
-        age_group_options = sorted(data["AGE_GROUP"].dropna().unique())
-        gender_options = sorted(data["GENDER"].dropna().unique())
-        race_options = sorted(data["RACE"].dropna().unique())
-        ethnicity_options = sorted(data["ETHNICITY"].dropna().unique())
-        encounter_class_options = sorted(data["ENCOUNTERCLASS"].dropna().unique())
-    
-        selected_age_groups = multiselect_with_select_all("Age Group", age_group_options)
-        selected_genders = multiselect_with_select_all("Gender", gender_options)
-        selected_races = multiselect_with_select_all("Race", race_options)
-        selected_ethnicities = multiselect_with_select_all("Ethnicity", ethnicity_options)
-        selected_encounters = multiselect_with_select_all("Encounter Class", encounter_class_options)
-    
-        # Apply filters with isin() for lists
+   # Sidebar Filters
+st.sidebar.header("Filter Data")
+
+if not data.empty and "START_YEAR" in data.columns:
+    years = sorted(list(data["START_YEAR"].unique()))
+    start_year = st.sidebar.selectbox("Start Year", years, index=0)
+    end_year = st.sidebar.selectbox("End Year", years, index=len(years)-1)
+
+    # Helper to auto-select all if checkbox is checked
+    def multiselect_with_select_all(label, options):
+        select_all = st.sidebar.checkbox(f"Select All {label}", value=True, key=label)
+        selected = st.sidebar.multiselect(label, options, default=options if select_all else [])
+        return selected
+
+    # Multi-select filter options
+    age_group_options = sorted(data["AGE_GROUP"].dropna().unique())
+    gender_options = sorted(data["GENDER"].dropna().unique())
+    race_options = sorted(data["RACE"].dropna().unique())
+    ethnicity_options = sorted(data["ETHNICITY"].dropna().unique())
+    encounter_class_options = sorted(data["ENCOUNTERCLASS"].dropna().unique())
+
+    selected_age_groups = multiselect_with_select_all("Age Group", age_group_options)
+    selected_genders = multiselect_with_select_all("Gender", gender_options)
+    selected_races = multiselect_with_select_all("Race", race_options)
+    selected_ethnicities = multiselect_with_select_all("Ethnicity", ethnicity_options)
+    selected_encounters = multiselect_with_select_all("Encounter Class", encounter_class_options)
+
+    # Only filter if at least one option is selected per field
+    if all([selected_age_groups, selected_genders, selected_races, selected_ethnicities, selected_encounters]):
         filtered_data = data[
             (data["START_YEAR"] >= start_year) &
             (data["START_YEAR"] <= end_year) &
@@ -294,10 +293,17 @@ else:
             (data["ETHNICITY"].isin(selected_ethnicities)) &
             (data["ENCOUNTERCLASS"].isin(selected_encounters))
         ]
-    
-        st.session_state.filtered_data = filtered_data
     else:
-        st.sidebar.warning("Data not loaded or missing required columns.")
+        filtered_data = pd.DataFrame()  # Empty result if any filter is not selected
+
+    # Save to session state
+    st.session_state.filtered_data = filtered_data
+
+    # Optional: Show warning if nothing matches
+    if filtered_data.empty:
+        st.warning("⚠️ No data matches the selected filters. Try adjusting them.")
+else:
+    st.sidebar.warning("Data not loaded or missing required columns.")
 
      # Create tabs
 tab2, tab3, tab4, tab5, tab7, tab8 = st.tabs([
@@ -317,13 +323,13 @@ with tab2:
     st.markdown("<div class='section key-metrics-section'>", unsafe_allow_html=True)
 
     try:
-        if st.session_state.filtered_data is not None and not st.session_state.filtered_data.empty:
+        if "filtered_data" in st.session_state and not st.session_state.filtered_data.empty:
             filtered_data = st.session_state.filtered_data
-            
-            # Check if required columns exist
+
+            # Check for required columns before computing metrics
             required_metrics_cols = ["TOTALCOST", "AGE", "PATIENT", "ENCOUNTER_DURATION", "HEALTHCARE_COVERAGE"]
             missing_cols = [col for col in required_metrics_cols if col not in filtered_data.columns]
-            
+
             if missing_cols:
                 st.warning(f"Missing columns for metrics calculation: {missing_cols}")
             else:
@@ -332,76 +338,85 @@ with tab2:
                 avg_age = filtered_data["AGE"].mean()
                 total_patients = filtered_data["PATIENT"].nunique()
                 avg_encounter_duration = filtered_data["ENCOUNTER_DURATION"].mean()
-                avg_coverage = filtered_data["HEALTHCARE_COVERAGE"].mean() if "HEALTHCARE_COVERAGE" in filtered_data.columns else 0
+                avg_coverage = filtered_data["HEALTHCARE_COVERAGE"].mean()
 
                 col1, col2, col3 = st.columns(3)
-                
+
                 with col1:
-                    st.metric(label="Average Claim Cost", value=f"${avg_claim_cost:.2f}")
-                    st.metric(label="Total Number of Patients", value=total_patients)
+                    st.metric(label="Average Claim Cost", value=f"${avg_claim_cost:,.2f}")
+                    st.metric(label="Total Patients", value=f"{total_patients:,}")
 
                 with col2:
-                    st.metric(label="Average Health Care Coverage", value=f"${avg_coverage:.2f}")
-                    st.metric(label="Average Patient Age", value=f"{avg_age:.1f} years")
+                    st.metric(label="Average Coverage", value=f"${avg_coverage:,.2f}")
+                    st.metric(label="Average Age", value=f"{avg_age:.1f} years")
 
                 with col3:
-                    st.metric(label="Total Number of Claims", value=total_claims)
-                    st.metric(label="Average Encounter Duration", value=f"{avg_encounter_duration:.1f} days")
+                    st.metric(label="Total Claims", value=f"{total_claims:,}")
+                    st.metric(label="Avg Encounter Duration", value=f"{avg_encounter_duration:.1f} days")
         else:
-            st.warning("No data available for metrics calculation.")
+            st.warning("No filtered data available. Please adjust filters in the sidebar.")
     except Exception as e:
         st.error(f"Error calculating key metrics: {e}")
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-   # 📅 Tab 3: Claim Forecast with Prophet (Interactive + Filters)
+
+  
+# 📅 Tab 3: Claim Forecast with Prophet (Interactive + Filters)
 with tab3:
     st.header("Claim Forecast")
     st.markdown("<div class='section'>", unsafe_allow_html=True)
 
-    # ✅ Check for valid filtered data
     if "filtered_data" in st.session_state and not st.session_state.filtered_data.empty:
         df = st.session_state.filtered_data.copy()
 
         try:
+            # Ensure necessary columns exist
             if "START" in df.columns and "TOTALCOST" in df.columns:
-                df['START'] = pd.to_datetime(df['START'], errors='coerce').dt.tz_localize(None)
-                df.dropna(subset=['START'], inplace=True)
-                df.sort_values('START', inplace=True)
+                # Clean and prepare the data
+                df["START"] = pd.to_datetime(df["START"], errors="coerce").dt.tz_localize(None)
+                df = df.dropna(subset=["START"])
+                df = df[df["TOTALCOST"] >= 0]
+                df["TOTALCOST"] = pd.to_numeric(df["TOTALCOST"], errors="coerce")
+                df = df.sort_values("START")
 
-                df = df[df['TOTALCOST'] >= 0]
-                df['START_MONTH'] = df['START'].dt.to_period('M').dt.to_timestamp()
-                df['TOTALCOST'] = pd.to_numeric(df['TOTALCOST'], errors='coerce')
+                # Monthly aggregation
+                df["START_MONTH"] = df["START"].dt.to_period("M").dt.to_timestamp()
+                monthly_cost = df.groupby("START_MONTH")["TOTALCOST"].sum().dropna()
+                monthly_cost = monthly_cost[~monthly_cost.isin([np.inf, -np.inf])]
 
-                monthly_cost = df.groupby('START_MONTH')['TOTALCOST'].sum()
-                monthly_cost_clean = monthly_cost.dropna()
-                monthly_cost_clean = monthly_cost_clean[~monthly_cost_clean.isin([np.inf, -np.inf])]
-                monthly_cost_recent = monthly_cost_clean[-36:]
-
+                # Limit to recent 3 years (36 months)
+                monthly_cost_recent = monthly_cost[-36:]
                 prophet_df = monthly_cost_recent.reset_index()
-                prophet_df.columns = ['ds', 'y']
+                prophet_df.columns = ["ds", "y"]
 
+                # Prophet model
                 model = Prophet(changepoint_prior_scale=0.05)
                 model.fit(prophet_df)
-                future = model.make_future_dataframe(periods=60, freq='MS')
+
+                future = model.make_future_dataframe(periods=60, freq="MS")
                 forecast = model.predict(future)
 
+                # Display forecast
                 st.subheader("Interactive Forecast Plot (Next 5 Years)")
-                fig_plotly = px.line(forecast, x='ds', y='yhat',
-                                     labels={'ds': 'Date', 'yhat': 'Predicted Claim Cost'},
-                                     title='Forecast of Monthly Claim Costs')
+                fig_plotly = px.line(
+                    forecast, x="ds", y="yhat",
+                    labels={"ds": "Date", "yhat": "Predicted Claim Cost"},
+                    title="Forecast of Monthly Claim Costs"
+                )
                 st.plotly_chart(fig_plotly, use_container_width=True)
 
-                st.write("Forecast Table (Tail):")
-                st.dataframe(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail())
+                st.write("Forecast Table (Last 5 Years):")
+                st.dataframe(forecast[["ds", "yhat", "yhat_lower", "yhat_upper"]].tail())
             else:
-                st.warning("Columns 'START' and 'TOTALCOST' not found in the dataset.")
+                st.warning("Missing columns: 'START' and/or 'TOTALCOST'. Please check your dataset.")
         except Exception as e:
             st.error(f"Error generating claim forecast with Prophet: {e}")
     else:
-        st.warning("No filtered data available. Please apply filters in the sidebar or ensure data is loaded.")
+        st.warning("No filtered data available. Please adjust filters in the sidebar.")
 
     st.markdown("</div>", unsafe_allow_html=True)
+
      # Tab 4: Data Visualizations
 with tab4:
     st.header("Data Visualizations")
@@ -414,18 +429,25 @@ with tab4:
         df = st.session_state.filtered_data.copy()
 
         try:
-            st.subheader("Total Cost Distribution")
-            fig_cost_dist = px.histogram(df, x="TOTALCOST", nbins=20, 
-                                         labels={"TOTALCOST": "Total Cost ($)"}, 
-                                         color_discrete_sequence=["#636EFA"])
-            fig_cost_dist.update_layout(bargap=0.1, showlegend=False)
-            st.plotly_chart(fig_cost_dist, use_container_width=True)
+            # ✅ Check if TOTALCOST column is present
+            if "TOTALCOST" in df.columns:
+                st.subheader("Total Cost Distribution")
+                fig_cost_dist = px.histogram(
+                    df, x="TOTALCOST", nbins=20,
+                    labels={"TOTALCOST": "Total Cost ($)"},
+                    color_discrete_sequence=["#636EFA"]
+                )
+                fig_cost_dist.update_layout(bargap=0.1, showlegend=False)
+                st.plotly_chart(fig_cost_dist, use_container_width=True)
+            else:
+                st.warning("Missing column: 'TOTALCOST'. Please check your dataset.")
         except Exception as e:
-            st.error(f"Error creating Total Cost Distribution chart:E {e}")
+            st.error(f"Error creating Total Cost Distribution chart: {e}")
     else:
         st.warning("No filtered data available. Please apply filters in the sidebar.")
 
     st.markdown("</div>", unsafe_allow_html=True)
+
             
             # Tab 5: Resource Allocation
 with tab5:
@@ -524,8 +546,7 @@ with tab5:
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-        # Tab 7: Prediction Cost
-# Tab 7: Prediction Cost
+     
 # Tab 7: Prediction Cost
 with tab7:
     st.header("Prediction Cost")
