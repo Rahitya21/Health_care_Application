@@ -432,9 +432,7 @@ with tab3:
             fig.add_scatter(x=grouped['ds'], y=grouped['y'], mode='markers', name='Actual')
             st.plotly_chart(fig, use_container_width=True)
 
-            st.write("Forecast Table (Tail):")
-            st.dataframe(forecast[["ds", "yhat", "yhat_lower", "yhat_upper"]].tail())
-
+           
         except Exception as e:
             st.error(f"Error generating advanced forecast: {e}")
 
