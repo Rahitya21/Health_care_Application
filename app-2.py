@@ -362,7 +362,7 @@ with tab2:
 
 
   
-# 📅 Tab 3: Claim Forecast with Prophet (Interactive + Filters)
+# 📅 Tab 3: Claim Forecast with Prophet (Interactive + Regressors)
 with tab3:
     st.header("Claim Forecast")
     st.markdown("<div class='section'>", unsafe_allow_html=True)
@@ -371,47 +371,73 @@ with tab3:
         df = st.session_state.filtered_data.copy()
 
         try:
-            # Ensure necessary columns exist
-            if "START" in df.columns and "TOTALCOST" in df.columns:
-                # Clean and prepare the data
-                df["START"] = pd.to_datetime(df["START"], errors="coerce").dt.tz_localize(None)
-                df = df.dropna(subset=["START"])
-                df = df[df["TOTALCOST"] >= 0]
-                df["TOTALCOST"] = pd.to_numeric(df["TOTALCOST"], errors="coerce")
-                df = df.sort_values("START")
+            import warnings
+            warnings.filterwarnings("ignore")
+            from prophet import Prophet
 
-                # Monthly aggregation
-                df["START_MONTH"] = df["START"].dt.to_period("M").dt.to_timestamp()
-                monthly_cost = df.groupby("START_MONTH")["TOTALCOST"].sum().dropna()
-                monthly_cost = monthly_cost[~monthly_cost.isin([np.inf, -np.inf])]
+            # Clean and prepare the data
+            df["START"] = pd.to_datetime(df["START"], errors="coerce").dt.tz_localize(None)
+            df.dropna(subset=["START"], inplace=True)
+            df = df[df["TOTALCOST"] >= 0]
+            df["TOTALCOST"] = pd.to_numeric(df["TOTALCOST"], errors="coerce")
+            df = df.sort_values("START")
 
-                # Limit to recent 3 years (36 months)
-                monthly_cost_recent = monthly_cost[-36:]
-                prophet_df = monthly_cost_recent.reset_index()
-                prophet_df.columns = ["ds", "y"]
+            df["START_MONTH"] = df["START"].dt.to_period("M").dt.to_timestamp()
+            regressors = ['AGE', 'NUM_STATUS1', 'NUM_DIAG1', 'NUM_DIAG2', 
+                          'INCOME', 'HEALTHCARE_EXPENSES', 'HEALTHCARE_COVERAGE']
+            cat_vars = ['RACE', 'ETHNICITY', 'GENDER','ENCOUNTERCLASS']
 
-                # Prophet model
-                model = Prophet(changepoint_prior_scale=0.05)
-                model.fit(prophet_df)
+            # Handle numeric and categorical
+            df[regressors] = df[regressors].apply(pd.to_numeric, errors='coerce')
+            df_encoded = pd.get_dummies(df[cat_vars], drop_first=True)
+            df_final = pd.concat([df[['START_MONTH', 'TOTALCOST']], df[regressors], df_encoded], axis=1)
 
-                future = model.make_future_dataframe(periods=60, freq="MS")
-                forecast = model.predict(future)
+            grouped = df_final.groupby('START_MONTH').agg({
+                'TOTALCOST': 'sum',
+                **{col: 'mean' for col in regressors + list(df_encoded.columns)}
+            }).reset_index()
 
-                # Display forecast
-                st.subheader("Interactive Forecast Plot (Next 5 Years)")
-                fig_plotly = px.line(
-                    forecast, x="ds", y="yhat",
-                    labels={"ds": "Date", "yhat": "Predicted Claim Cost"},
-                    title="Forecast of Monthly Claim Costs"
-                )
-                st.plotly_chart(fig_plotly, use_container_width=True)
+            grouped.rename(columns={'START_MONTH': 'ds', 'TOTALCOST': 'y'}, inplace=True)
+            grouped['ds'] = pd.to_datetime(grouped['ds'], errors='coerce')
+            grouped = grouped[grouped['ds'].dt.year >= 2000].drop_duplicates(subset='ds').sort_values('ds')
 
-                st.write("Forecast Table (Last 5 Years):")
-                st.dataframe(forecast[["ds", "yhat", "yhat_lower", "yhat_upper"]].tail())
-            else:
-                st.warning("Missing columns: 'START' and/or 'TOTALCOST'. Please check your dataset.")
+            grouped['lag_1'] = grouped['y'].shift(1)
+            grouped['rolling_mean_3'] = grouped['y'].shift(1).rolling(window=3).mean()
+            grouped = grouped.dropna().reset_index(drop=True)
+
+            # Fit Prophet with regressors
+            model = Prophet(interval_width=0.95, mcmc_samples=300)
+            for col in grouped.columns:
+                if col not in ['ds', 'y']:
+                    model.add_regressor(col)
+            model.fit(grouped)
+
+            # Forecast until 2030
+            last_date = grouped['ds'].max()
+            future_end = pd.to_datetime('2030-12-01')
+            months_to_forecast = (future_end.year - last_date.year) * 12 + (future_end.month - last_date.month)
+            future = model.make_future_dataframe(periods=months_to_forecast, freq='MS')
+
+            for col in grouped.columns:
+                if col not in ['ds', 'y']:
+                    future[col] = grouped[col].iloc[-1]  # placeholder: last known value
+
+            forecast = model.predict(future)
+
+            # Plot interactive forecast
+            st.subheader("Forecast of Monthly Claim Costs (till 2030)")
+            fig = px.line(forecast, x='ds', y='yhat',
+                          labels={'ds': 'Date', 'yhat': 'Predicted Total Claim Cost'},
+                          title='Projected Claim Costs using Prophet')
+            fig.add_scatter(x=grouped['ds'], y=grouped['y'], mode='markers', name='Actual')
+            st.plotly_chart(fig, use_container_width=True)
+
+            st.write("Forecast Table (Tail):")
+            st.dataframe(forecast[["ds", "yhat", "yhat_lower", "yhat_upper"]].tail())
+
         except Exception as e:
-            st.error(f"Error generating claim forecast with Prophet: {e}")
+            st.error(f"Error generating advanced forecast: {e}")
+
     else:
         st.warning("No filtered data available. Please adjust filters in the sidebar.")
 
